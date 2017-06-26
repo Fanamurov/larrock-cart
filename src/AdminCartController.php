@@ -3,7 +3,7 @@
 namespace Larrock\ComponentCart;
 
 use Alert;
-use App\User;
+use Larrock\ComponentUsers\Models\User;
 use Breadcrumbs;
 use Illuminate\Http\Request;
 
