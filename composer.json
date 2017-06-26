@@ -1,0 +1,26 @@
+{
+    "name": "fanamurov/larrock-cart",
+    "description": "Cart to catalog component for larrockCMS",
+    "type": "library",
+    "license": "BSD",
+    "authors": [
+        {
+            "name": "Alexandr Fanamurov",
+            "email": "fanamurov@ya.ru"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Larrock\\ComponentCart\\": "src",
+            "Larrock\\ComponentCart\\Models\\": "src/Models"
+        }
+    },
+    "require": {
+        "gloudemans/shoppingcart": "^2.3",
+        "artem328/laravel-yandex-kassa": "^1.0",
+        "fanamurov/larrock-core": "^0.1",
+        "fanamurov/larrock-catalog": "^0.1",
+        "fanamurov/larrock-category": "^0.1",
+        "fanamurov/larrock-users": "^0.1"
+    }
+}
