@@ -16,4 +16,4 @@
     <button type="submit" class="btn btn-default pull-right" name="submit_orderShort">Отправить заявку</button>
     <div class="clearfix"></div>
 </form>
-{!! JsValidator::formRequest('App\Http\Requests\OrderShortRequest', '#form-orderShort') !!}
+{!! JsValidator::formRequest('Larrock\ComponentCart\Requests\OrderShortRequest', '#form-orderShort') !!}

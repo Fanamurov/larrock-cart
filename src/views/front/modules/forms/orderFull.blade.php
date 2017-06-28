@@ -82,4 +82,4 @@
     </div>
     <div class="clearfix"></div>
 </form>
-{!! JsValidator::formRequest('App\Http\Requests\OrderFullRequest', '#form-orderFull') !!}
+{!! JsValidator::formRequest('Larrock\ComponentCart\Requests\OrderFullRequest', '#form-orderFull') !!}

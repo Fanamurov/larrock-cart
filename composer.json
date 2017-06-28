@@ -12,7 +12,8 @@
     "autoload": {
         "psr-4": {
             "Larrock\\ComponentCart\\": "src",
-            "Larrock\\ComponentCart\\Models\\": "src/Models"
+            "Larrock\\ComponentCart\\Models\\": "src/Models",
+            "Larrock\\ComponentCart\\Requests\\": "src/Requests"
         }
     },
     "require": {
