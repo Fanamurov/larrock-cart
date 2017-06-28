@@ -31,12 +31,13 @@ class LarrockComponentCartServiceProvider extends ServiceProvider
         $this->app->make(CartComponent::class);
 
         $timestamp = date('Y_m_d_His', time());
+        $timestamp_after = date('Y_m_d_His', time()+10);
         $migrations = [];
         if ( !class_exists('CreateCartTable')){
-            $migrations[__DIR__.'/../database/migrations/0000_00_00_000000_create_cart_table.php'] = database_path('migrations/'.$timestamp.'_create_cart_table.php');
+            $migrations[__DIR__.'/database/migrations/0000_00_00_000000_create_cart_table.php'] = database_path('migrations/'.$timestamp.'_create_cart_table.php');
         }
         if ( !class_exists('AddForeignKeysToCartTable')){
-            $migrations[__DIR__.'/../database/migrations/0000_00_00_000000_add_foreign_keys_to_cart_table.php'] = database_path('migrations/'.$timestamp.'_add_foreign_keys_to_cart_table.php');
+            $migrations[__DIR__.'/database/migrations/0000_00_00_000000_add_foreign_keys_to_cart_table.php'] = database_path('migrations/'.$timestamp_after.'_add_foreign_keys_to_cart_table.php');
         }
 
         $this->publishes($migrations, 'migrations');
