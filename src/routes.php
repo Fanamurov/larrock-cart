@@ -5,7 +5,18 @@ use Larrock\ComponentCart\CartController;
 use Larrock\ComponentCatalog\CatalogController;
 use Larrock\ComponentUsers\UserController;
 
-Route::group(['middleware' => ['web', 'AddMenuFront', 'GetSeo', 'AddBlocksTemplate']], function(){
+$middlewares = ['web', 'GetSeo'];
+if(file_exists(base_path(). '/vendor/fanamurov/larrock-menu')){
+    $middlewares[] = 'AddMenuFront';
+}
+if(file_exists(base_path(). '/vendor/fanamurov/larrock-blocks')){
+    $middlewares[] = 'AddBlocksTemplate';
+}
+if(file_exists(base_path(). '/vendor/fanamurov/larrock-discounts')){
+    $middlewares[] = 'DiscountsShare';
+}
+
+Route::group(['middleware' => $middlewares], function(){
     Route::get('/cart', [
         'as' => 'cart.index', 'uses' => CartController::class .'@getIndex'
     ]);

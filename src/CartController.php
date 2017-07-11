@@ -388,8 +388,10 @@ class CartController extends Controller
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
             $discountHelper = new DiscountHelper();
             $apply_discount = $discountHelper->apply_discountsByTovar($get_tovar, TRUE);
+            $cost = $apply_discount->cost;
+        }else{
+            $cost = $get_tovar->cost;
         }
-        $cost = $apply_discount->cost;
         $qty = $request->get('qty', 1);
         $options = $request->get('options', []);
         if( !empty($options)){
@@ -416,6 +418,9 @@ class CartController extends Controller
             $discounts = $discountHelper->check();
             $total = $discounts['cost_after_discount'];
             $profit = $discounts['profit'];
+        }else{
+            $total = $cost*$qty;
+            $profit = 0;
         }
 
         return response()->json(['status' => 'success', 'message' => 'Товар добавлен в корзину', 'total' => $total, 'total_discount' => $profit]);
