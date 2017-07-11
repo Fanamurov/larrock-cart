@@ -23,16 +23,16 @@ Route::group(['middleware' => ['web', 'AddMenuFront', 'GetSeo', 'AddBlocksTempla
     ]);
 
     Route::post('/ajax/cartAdd', [
-        'as' => 'ajax.cartAdd', 'uses' => CartController::class .'Ajax@cartAdd'
+        'as' => 'ajax.cartAdd', 'uses' => CartController::class .'@cartAdd'
     ]);
     Route::post('/ajax/cartRemove', [
-        'as' => 'ajax.cartRemove', 'uses' => CartController::class .'Ajax@cartRemove'
+        'as' => 'ajax.cartRemove', 'uses' => CartController::class .'@cartRemove'
     ]);
     Route::post('/ajax/cartQty', [
-        'as' => 'ajax.cartQty', 'uses' => CartController::class .'Ajax@cartQty'
+        'as' => 'ajax.cartQty', 'uses' => CartController::class .'@cartQty'
     ]);
     Route::any('/ajax/getTovar', [
-        'as' => 'ajax.getTovar', 'uses' => CatalogController::class .'Ajax@getTovar'
+        'as' => 'ajax.getTovar', 'uses' => CatalogController::class .'@getTovar'
     ]);
 });
 

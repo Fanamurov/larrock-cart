@@ -13,7 +13,7 @@ class CartComponent extends Component
 {
     public function __construct()
     {
-        $this->active = NULL;
+        $this->active = TRUE;
         $this->name = $this->table = 'cart';
         $this->title = 'Заказы';
         $this->description = 'Заказы с интернет-магазина';
