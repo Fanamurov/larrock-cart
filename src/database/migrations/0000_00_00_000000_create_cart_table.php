@@ -23,8 +23,8 @@ class CreateCartTable extends Migration {
 			$table->char('tel')->nullable();
 			$table->char('email')->nullable();
 			$table->float('cost', 10)->default(0.00);
-			$table->float('cost_discount', 10);
-			$table->text('discount');
+			$table->float('cost_discount', 10)->nullable();
+			$table->text('discount')->nullable();
 			$table->char('kupon')->nullable();
 			$table->char('status_order')->default('');
 			$table->char('status_pay')->default('');

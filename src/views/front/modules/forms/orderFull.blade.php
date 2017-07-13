@@ -37,10 +37,12 @@
                 <input type="tel" name="tel" id="tel" class="uk-width-1-1"
                        value="@if(Auth::guard()->check()){!! Auth::guard()->user()->tel !!}@else {{ old('tel') }} @endif" required>
             </div>
-            <div class="uk-form-row">
-                <label for="fio" class="uk-form-label">У вас есть скидочный купон?</label>
-                <input type="text" value="" placeholder="ИМЯ купона" name="kupon" class="uk-width-1-1">
-            </div>
+            @if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount'))
+                <div class="uk-form-row">
+                    <label for="fio" class="uk-form-label">У вас есть скидочный купон?</label>
+                    <input type="text" value="" placeholder="ИМЯ купона" name="kupon" class="uk-width-1-1">
+                </div>
+            @endif
             <div class="uk-form-row">
                 <label for="comment" class="uk-form-label">Комментарий к заказу:</label>
                 <textarea name="comment" id="comment" class="uk-width-1-1">{{ old('comment') }}</textarea>

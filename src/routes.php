@@ -24,7 +24,7 @@ Route::group(['middleware' => $middlewares], function(){
         'as' => 'cart.sendOrder', 'uses' => CartController::class .'@sendOrderShort'
     ]);
     Route::post('/cart/full', [
-        'as' => 'cart.sendOrderFull', 'uses' => CartController::class .'r@sendOrderFull'
+        'as' => 'cart.sendOrderFull', 'uses' => CartController::class .'@sendOrderFull'
     ]);
     Route::get('/cart/success', [
         'as' => 'cart.success', 'uses' => UserController::class .'@cabinet'

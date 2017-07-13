@@ -7,8 +7,7 @@ use App\Http\Controllers\Controller;
 use Larrock\ComponentCatalog\CatalogComponent;
 use Larrock\ComponentCatalog\Models\Catalog;
 use Larrock\ComponentCart\Models\Cart as CartModel;
-use App\Models\FormsLog;
-use App\User;
+use Larrock\ComponentUsers\Models\User;
 use Auth;
 use Cart;
 use Illuminate\Http\Request;
@@ -84,7 +83,7 @@ class CartController extends Controller
             $discount_motivate = $discountHelper->motivate_cart_discount(Cart::total());
         }
 
-        return view('front.cart.table', compact('cart', 'seo', 'discount', 'discount_motivate' , ['cart', 'seo', 'discount', 'discount_motivate']));
+        return view('larrock::front.cart.table', compact('cart', 'seo', 'discount', 'discount_motivate' , ['cart', 'seo', 'discount', 'discount_motivate']));
     }
 
     public function sendOrderShort(Request $request)
@@ -162,10 +161,10 @@ class CartController extends Controller
 
         //Собираем данные для заказа
         $create_order = new CartModel();
-        $create_order->user_id = $user->id;
-        $create_order->items = Cart::content();
+        $create_order->user = $user->id;
+        $create_order->items = Cart::instance('main')->content();
 
-        $create_order->cost = Cart::instance('main')->total();
+        $create_order->cost = (float)str_replace(',', '', Cart::instance('main')->total());
         $create_order->cost_discount = NULL;
 
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
@@ -215,13 +214,13 @@ class CartController extends Controller
      */
     public function mailFullOrder(Request $request, $order)
     {
-        FormsLog::create(['formname' => 'order', 'params' => $request->all(), 'status' => 'Новое']);
+        \Log::info('NEW ORDER #'. $order->order_id .'. Order: '. json_encode($order));
 
         $mails = collect(array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru'))));
 
         $subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' успешно оформлен';
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-        $send = Mail::send('emails.orderFull', ['data' => $order->toArray(), 'subject' => $subject],
+        $send = Mail::send('larrock::emails.orderFull', ['data' => $order->toArray(), 'subject' => $subject],
             function($message) use ($mails, $subject){
                 $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
                 foreach($mails as $value){
@@ -230,11 +229,7 @@ class CartController extends Controller
                 $message->subject($subject);
             });
 
-        if($send){
-            Alert::add('success', 'На Ваш email отправлено письмо с деталями заказа')->flash();
-        }else{
-            Alert::add('error', 'Письмо с деталями заказа не отправлено')->flash();
-        }
+        Alert::add('success', 'На Ваш email отправлено письмо с деталями заказа')->flash();
     }
 
     /**
@@ -412,7 +407,7 @@ class CartController extends Controller
             }
         }
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-        Cart::instance('main')->add($request->get('id'), $get_tovar->title, $qty, $cost, $options)->associate('App\Models\Catalog');
+        Cart::instance('main')->add($request->get('id'), $get_tovar->title, $qty, $cost, $options)->associate('\Larrock\ComponentCatalog\Models\Catalog');
 
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
             $discounts = $discountHelper->check();
