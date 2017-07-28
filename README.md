@@ -21,11 +21,11 @@
 4. Add the ServiceProvider to the providers array in app/config/app.php
   ```
   //LARROCK COMPONENT Cart DEPENDS
-  \Larrock\ComponentCart\LarrockComponentCartServiceProvider::class
+  \Larrock\ComponentCart\LarrockComponentCartServiceProvider::class,
   //https://packagist.org/packages/gloudemans/shoppingcart :: Корзина для каталога
   Gloudemans\Shoppingcart\ShoppingcartServiceProvider::class,
   //https://github.com/artem328/laravel-yandex-kassa
-    Artem328\LaravelYandexKassa\YandexKassaServiceProvider::class,
+  Artem328\LaravelYandexKassa\YandexKassaServiceProvider::class,
   ```
 
   aliases
