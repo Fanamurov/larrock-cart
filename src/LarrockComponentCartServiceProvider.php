@@ -29,7 +29,11 @@ class LarrockComponentCartServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->make(CartComponent::class);
+        $this->app->singleton('larrockcart', function() {
+            $class = config('larrock.components.cart', CartComponent::class);
+            return new $class;
+        });
+
         $timestamp = date('Y_m_d_His', time());
         $timestamp_after = date('Y_m_d_His', time()+10);
         $migrations = [];

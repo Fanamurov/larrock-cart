@@ -52,7 +52,7 @@
             <div class="uk-form-row">
                 <label for="delivery-method" class="uk-form-label">Метод доставки:</label>
                 <select name="delivery-method" id="delivery-method" >
-                    @foreach($config_cart->rows['method_delivery']->options as $value)
+                    @foreach($app->rows['method_delivery']->options as $value)
                         <option @if(old('delivery-method') === $value) selected @endif value="{{ $value }}">{{ $value }}</option>
                     @endforeach
                 </select>
@@ -65,7 +65,7 @@
             <div class="uk-form-row">
                 <label for="pay-method" class="uk-form-label">Метод оплаты:</label>
                 <select name="pay-method" id="pay-method">
-                    @foreach($config_cart->rows['method_pay']->options as $value)
+                    @foreach($app->rows['method_pay']->options as $value)
                         <option @if(old('pay-method') === $value) selected @endif value="{{ $value }}">{{ $value }}</option>
                     @endforeach
                 </select>

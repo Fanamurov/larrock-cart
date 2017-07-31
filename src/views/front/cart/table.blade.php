@@ -31,7 +31,7 @@
                         </div>
                         <p class="uk-h4"><a href="{{ $row->model->full_url }}">{{ $row->name }}</a></p>
                         <div class="item-options">
-                            @foreach($config_app->rows as $row_key => $config_row)
+                            @foreach($app->rows as $row_key => $config_row)
                                 @if($config_row->template === 'in_card' && isset($row->model->{$row_key}) && !empty($row->model->{$row_key}))
                                     <p><span class="uk-text-muted">{{ $config_row->title }}:</span> {{ $row->model->{$row_key} }}</p>
                                 @endif

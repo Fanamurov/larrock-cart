@@ -8,6 +8,7 @@ use Larrock\Core\Helpers\FormBuilder\FormInput;
 use Larrock\Core\Helpers\FormBuilder\FormSelect;
 use Larrock\Core\Helpers\FormBuilder\FormTextarea;
 use Larrock\ComponentCart\Models\Cart;
+use Larrock\ComponentCart\Facades\LarrockCart;
 
 class CartComponent extends Component
 {
@@ -17,7 +18,7 @@ class CartComponent extends Component
         $this->name = $this->table = 'cart';
         $this->title = 'Заказы';
         $this->description = 'Заказы с интернет-магазина';
-        $this->model = Cart::class;
+        $this->model = \config('larrock.models.cart', Cart::class);
         $this->addRows()->isSearchable();
     }
 
@@ -64,9 +65,9 @@ class CartComponent extends Component
 
     public function renderAdminMenu()
     {
-        $count = \Cache::remember('count-data-admin-'. $this->name, 1440, function(){
-            return Cart::count(['id']);
+        $count = \Cache::remember('count-data-admin-'. LarrockCart::getName(), 1440, function(){
+            return LarrockCart::getModel()->count(['id']);
         });
-        return view('larrock::admin.sectionmenu.types.default', ['count' => $count, 'app' => $this, 'url' => '/admin/'. $this->name]);
+        return view('larrock::admin.sectionmenu.types.default', ['count' => $count, 'app' => LarrockCart::getConfig(), 'url' => '/admin/'. LarrockCart::getName()]);
     }
 }

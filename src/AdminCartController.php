@@ -15,19 +15,19 @@ use Validator;
 use View;
 use Larrock\ComponentCart\Models\Cart as ModelCart;
 use Cart;
+use Larrock\ComponentCart\Facades\LarrockCart;
+use Larrock\ComponentCatalog\Facades\LarrockCatalog;
+use Larrock\ComponentUsers\Facades\LarrockUsers;
 
 class AdminCartController extends Controller
 {
-	protected $config;
-
 	public function __construct()
 	{
-        $Component = new CartComponent();
-        $this->config = $Component->shareConfig();
+        LarrockCart::shareConfig();
 
         Breadcrumbs::setView('larrock::admin.breadcrumb.breadcrumb');
-        Breadcrumbs::register('admin.'. $this->config->name .'.index', function($breadcrumbs){
-            $breadcrumbs->push($this->config->title, '/admin/'. $this->config->name);
+        Breadcrumbs::register('admin.'. LarrockCart::getName() .'.index', function($breadcrumbs){
+            $breadcrumbs->push(LarrockCart::getTitle(), '/admin/'. LarrockCart::getName());
         });
 	}
 
@@ -39,8 +39,8 @@ class AdminCartController extends Controller
 	public function index()
 	{
         $data['data'] = ModelCart::with(['get_user'])->latest()->paginate(30);
-        $data['catalog'] = Catalog::whereActive(1)->get(['id', 'title', 'cost']);
-        $data['users'] = User::all();
+        $data['catalog'] = LarrockCatalog::getModel()->whereActive(1)->get(['id', 'title', 'cost']);
+        $data['users'] = LarrockUsers::getModel()->all();
         return view('larrock::admin.cart.list', $data);
 	}
 
@@ -66,19 +66,19 @@ class AdminCartController extends Controller
 	public function store(Request $request)
 	{
 		$order = ModelCart::whereId($request->get('order_id'))->first();
-		$get_tovar = Catalog::whereId($request->get('id'))->first();
+		$get_tovar = LarrockCatalog::getModel()->whereId($request->get('id'))->first();
 		$qty = $request->get('qty', 1);
 		$options = $request->get('options', []);
 		if( !empty($options)){
 			$options = (array) json_decode($options);
 		}
 		/** @noinspection PhpVoidFunctionResultUsedInspection */
-		Cart::instance('editer')->add($request->get('id'), $get_tovar->title, $qty, $get_tovar->cost, $options)->associate('App\Models\Catalog');
+		Cart::instance('editer')->add($request->get('id'), $get_tovar->title, $qty, $get_tovar->cost, $options)->associate(LarrockCatalog::getModelName());
 
 		/** @noinspection ForeachSourceInspection */
 		foreach($order->items as $item){
 			/** @noinspection PhpVoidFunctionResultUsedInspection */
-			Cart::instance('editer')->add($item->id, $item->name, $item->qty, $item->price, $options)->associate('App\Models\Catalog');
+			Cart::instance('editer')->add($item->id, $item->name, $item->qty, $item->price, $options)->associate(LarrockCatalog::getModelName());
 		}
 
 		$order->items = Cart::instance('editer')->content();
@@ -122,7 +122,7 @@ class AdminCartController extends Controller
      */
 	public function update(Request $request, $id)
 	{
-        $validator = Validator::make($request->all(), Component::_valid_construct($this->config, 'update', $id));
+        $validator = Validator::make($request->all(), Component::_valid_construct(LarrockCart::getConfig(), 'update', $id));
         if($validator->fails()){
             return back()->withInput($request->except('password'))->withErrors($validator);
         }
@@ -174,7 +174,7 @@ class AdminCartController extends Controller
 		$order->items = json_encode($items);
 		$order->cost += $items->{$id}->subtotal;
 
-		$tovar = Catalog::whereId($items->{$id}->id)->first();
+		$tovar = LarrockCatalog::getModel()->whereId($items->{$id}->id)->first();
 		$tovar->nalichie += $request->get('old-qty', 1);
 		$tovar->nalichie -= $items->{$id}->qty;
 		$tovar->sales -= $request->get('old-qty', 1);
@@ -234,7 +234,7 @@ class AdminCartController extends Controller
 
 		$subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' удален';
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-		$send = Mail::send('emails.orderFull-delete', ['data' => $order->toArray(), 'subject' => $subject],
+		Mail::send('emails.orderFull-delete', ['data' => $order->toArray(), 'subject' => $subject],
 			function($message) use ($mails, $subject){
 				$message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
 				foreach($mails as $value){
@@ -243,11 +243,7 @@ class AdminCartController extends Controller
 				$message->subject($subject);
 			});
 
-		if($send){
-			Alert::add('successAdmin', 'На email покупателя отправлено письмо с деталями заказа')->flash();
-		}else{
-			Alert::add('errorAdmin', 'Письмо с деталями заказа не отправлено')->flash();
-		}
+        Alert::add('successAdmin', 'На email покупателя отправлено письмо с деталями заказа')->flash();
 	}
 
 	/**
@@ -267,7 +263,7 @@ class AdminCartController extends Controller
 			$subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' изменен';
 		}
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-		$send = Mail::send('emails.orderFull-delete', ['data' => $order->toArray(), 'subject' => $subject],
+		Mail::send('emails.orderFull-delete', ['data' => $order->toArray(), 'subject' => $subject],
 			function($message) use ($mails, $subject){
 				$message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
 				foreach($mails as $value){
@@ -276,11 +272,7 @@ class AdminCartController extends Controller
 				$message->subject($subject);
 			});
 
-		if($send){
-			Alert::add('successAdmin', 'На email покупателя отправлено письмо с деталями заказа')->flash();
-		}else{
-			Alert::add('errorAdmin', 'Письмо с деталями заказа не отправлено')->flash();
-		}
+        Alert::add('successAdmin', 'На email покупателя отправлено письмо с деталями заказа')->flash();
 	}
 
 	public function docCheck($id)

@@ -1,3 +1,4 @@
+<!-- Старая верстка еще на bootstrap -->
 <form id="form-orderShort" class="form-orderShort" method="post" action="/cart/short">
     <p class="h3 text-center">Форма заявки</p>
     <div class="form-group">

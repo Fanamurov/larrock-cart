@@ -4,34 +4,21 @@ namespace Larrock\ComponentCart;
 
 use Alert;
 use App\Http\Controllers\Controller;
-use Larrock\ComponentCatalog\CatalogComponent;
-use Larrock\ComponentCatalog\Models\Catalog;
-use Larrock\ComponentCart\Models\Cart as CartModel;
-use Larrock\ComponentUsers\Models\User;
 use Auth;
 use Cart;
 use Illuminate\Http\Request;
-
 use Larrock\ComponentDiscount\Helpers\DiscountHelper;
-use Larrock\ComponentUsers\UsersComponent;
 use Mail;
 use Validator;
+use Larrock\ComponentCatalog\Facades\LarrockCatalog;
+use Larrock\ComponentUsers\Facades\LarrockUsers;
+use Larrock\ComponentCart\Facades\LarrockCart;
 
 class CartController extends Controller
 {
-    protected $config;
-    protected $config_cart;
-
     public function __construct()
     {
-        $Component = new CatalogComponent();
-        $this->config = $Component->shareConfig();
-
-        $Component = new CartComponent();
-        $this->config_cart = $Component->shareConfig();
-
-        \View::share('config_app', $this->config);
-        \View::share('config_cart', $this->config_cart);
+        LarrockCart::shareConfig();
     }
 
     public function getIndex()
@@ -48,7 +35,7 @@ class CartController extends Controller
         $cart = Cart::instance('main')->content();
         foreach($cart as $key => $item){
             //Проверяем наличие товара
-            if($get_tovar = Catalog::whereId($item->id)->first()){
+            if($get_tovar = LarrockCatalog::getModel()->whereId($item->id)->first()){
                 /*if((int)$get_tovar->nalichie < 1){
                     Cart::remove($item->rowid);
                     Alert::add('message', $get_tovar->title .' уже нет в наличии, товар удален из корзины')->flash();
@@ -91,7 +78,7 @@ class CartController extends Controller
         $mails = collect(array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru'))));
 
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-        $send = Mail::send('emails.orderShort',
+        Mail::send('emails.orderShort',
             ['name' => $request->get('name'),
                 'contact' => $request->get('contact'),
                 'comment' => $request->get('comment'),
@@ -105,11 +92,7 @@ class CartController extends Controller
                 );
             });
 
-        if($send){
-            Alert::add('success', 'Заявка успешно отправлена. С Вами свяжется наш менеджер')->flash();
-        }else{
-            Alert::add('error', 'Форма не отправлена. Ошибка отправки')->flash();
-        }
+        Alert::add('success', 'Заявка успешно отправлена. С Вами свяжется наш менеджер')->flash();
         return back();
     }
 
@@ -145,7 +128,7 @@ class CartController extends Controller
             return back()->withInput();
         }
 
-        if($update_user = User::whereId($user->id)->first()){
+        if($update_user = LarrockUsers::getModel()->whereId($user->id)->first()){
             if(empty($user->fio)){
                 $user->fio = $request->get('fio');
             }
@@ -160,7 +143,7 @@ class CartController extends Controller
         }
 
         //Собираем данные для заказа
-        $create_order = new CartModel();
+        $create_order = LarrockCart::getModel();
         $create_order->user = $user->id;
         $create_order->items = Cart::instance('main')->content();
 
@@ -220,7 +203,7 @@ class CartController extends Controller
 
         $subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' успешно оформлен';
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-        $send = Mail::send('larrock::emails.orderFull', ['data' => $order->toArray(), 'subject' => $subject],
+        Mail::send('larrock::emails.orderFull', ['data' => $order->toArray(), 'subject' => $subject],
             function($message) use ($mails, $subject){
                 $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
                 foreach($mails as $value){
@@ -243,7 +226,7 @@ class CartController extends Controller
     protected function changeTovarStatus($cart, $id_order)
     {
         foreach($cart as $item){
-            if($data = Catalog::find($item->id)){
+            if($data = LarrockCatalog::getModel()->find($item->id)){
                 $data->nalichie -= $item->qty; //Остаток товара
                 $data->sales += $item->qty; //Количество продаж
                 if($data->save()){
@@ -253,7 +236,7 @@ class CartController extends Controller
                 }
             }else{
                 //Товара больше нет в продаже, откатываем заказ
-                $find_order = CartModel::find($id_order);
+                $find_order = LarrockCart::getModel()->find($id_order);
                 $find_order->delete();
                 Cart::instance('main')->remove($item->id);
                 Alert::add('error', 'Товара из вашей корзины больше нет в нашем каталоге')->flash();
@@ -309,13 +292,12 @@ class CartController extends Controller
      */
     protected function fastRegistry(Request $request)
     {
-        if($user = User::whereEmail($request->input('email'))->first()){
+        if($user = LarrockUsers::getModel()->whereEmail($request->input('email'))->first()){
             Alert::add('error', 'Неверный пароль. Забыли Ваш пароль? <a target="_blank" href="/password/reset">Восстановление пароля</a>')->flash();
             return back()->withInput($request->all());
         }
 
-        $UserComponent = new UsersComponent();
-        $validator = Validator::make($request->all(), $UserComponent->valid);
+        $validator = Validator::make($request->all(), LarrockUsers::getValid());
         if($validator->fails()){
             return back()->withInput()->withErrors($validator);
         }
@@ -330,7 +312,7 @@ class CartController extends Controller
             'password' => \Hash::make($request->get('password')),
         ]);
 
-        if($user = User::whereEmail($request->input('email'))->first()){
+        if($user = LarrockUsers::getModel()->whereEmail($request->input('email'))->first()){
             $user->attachRole(3); //role user
             Alert::add('success', 'Покупатель '. $request->input('email') .' успешно добавлен')->flash();
             $this->mailRegistry($request, $user);
@@ -347,7 +329,7 @@ class CartController extends Controller
      */
     public function mailRegistry(Request $request, User $user)
     {
-        FormsLog::create(['formname' => 'register', 'params' => $request->all(), 'status' => 'Новое']);
+        //FormsLog::create(['formname' => 'register', 'params' => $request->all(), 'status' => 'Новое']);
 
         $mails = collect(array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru'))));
 
@@ -362,11 +344,7 @@ class CartController extends Controller
                 );
             });
 
-        if($send){
-            Alert::add('success', 'На Ваш email отправлено письмо с регистрационными данными')->flash();
-        }else{
-            Alert::add('error', 'Письмо с информацией по регистрации не отправлено')->flash();
-        }
+        Alert::add('success', 'На Ваш email отправлено письмо с регистрационными данными')->flash();
     }
 
     /* https://github.com/Crinsane/LaravelShoppingcart */
@@ -379,7 +357,7 @@ class CartController extends Controller
      */
     public function cartAdd(Request $request)
     {
-        $get_tovar = Catalog::whereId($request->get('id'))->firstOrFail();
+        $get_tovar = LarrockCatalog::getModel()->whereId($request->get('id'))->firstOrFail();
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
             $discountHelper = new DiscountHelper();
             $apply_discount = $discountHelper->apply_discountsByTovar($get_tovar, TRUE);
