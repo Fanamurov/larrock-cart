@@ -23,7 +23,7 @@ class AdminCartController extends Controller
 {
 	public function __construct()
 	{
-        LarrockCart::shareConfig();
+        $this->config = LarrockCart::shareConfig();
 
         Breadcrumbs::setView('larrock::admin.breadcrumb.breadcrumb');
         Breadcrumbs::register('admin.'. LarrockCart::getName() .'.index', function($breadcrumbs){
