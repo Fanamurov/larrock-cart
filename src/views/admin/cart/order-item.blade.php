@@ -19,7 +19,9 @@
                     @foreach($data->items as $key => $item)
                         <div class="uk-grid uk-grid-medium">
                             <div class="uk-width-3-10">
-                                <img class="all-width" src="{{ $item->catalog->first_image }}" alt='{{ $item->name }}'>
+                                @if($item->catalog)
+                                    <img class="all-width" src="{{ $item->catalog->first_image }}" alt='{{ $item->name }}'>
+                                @endif
                                 <form action="/admin/{{ $app->name }}/removeItem" method="post" class="remove-item">
                                     <input name="_method" type="hidden" value="DELETE">
                                     <input type="hidden" name="order_id" value="{{ $data->order_id }}">
@@ -81,7 +83,7 @@
                                 <select id="user_id{{ $data->order_id }}" name="user_id" class="uk-width-1-1">
                                     <option value="">Не назначен</option>
                                     @foreach($users as $user_item)
-                                        <option @if($data->user_id === $user_item->id) selected @endif value="{{ $user_item->id }}">{{ $user_item->fio }} ({{ $user_item->email }})</option>
+                                        <option @if($data->user === $user_item->id) selected @endif value="{{ $user_item->id }}">{{ $user_item->fio }} ({{ $user_item->email }})</option>
                                     @endforeach
                                 </select>
                             </div>
