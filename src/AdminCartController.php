@@ -3,17 +3,14 @@
 namespace Larrock\ComponentCart;
 
 use Alert;
-use Larrock\ComponentUsers\Models\User;
 use Breadcrumbs;
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
-use Larrock\ComponentCatalog\Models\Catalog;
 use Larrock\Core\Component;
 use Mail;
 use Validator;
 use View;
-use Larrock\ComponentCart\Models\Cart as ModelCart;
 use Cart;
 use Larrock\ComponentCart\Facades\LarrockCart;
 use Larrock\ComponentCatalog\Facades\LarrockCatalog;
@@ -38,7 +35,7 @@ class AdminCartController extends Controller
 	 */
 	public function index()
 	{
-        $data['data'] = ModelCart::with(['get_user'])->latest()->paginate(30);
+        $data['data'] = LarrockCart::getModel()->with(['get_user'])->latest()->paginate(30);
         $data['catalog'] = LarrockCatalog::getModel()->whereActive(1)->get(['id', 'title', 'cost']);
         $data['users'] = LarrockUsers::getModel()->all();
         return view('larrock::admin.cart.list', $data);
@@ -46,7 +43,7 @@ class AdminCartController extends Controller
 
 	public function create(Request $request)
 	{
-		$add_data = new ModelCart();
+		$add_data = LarrockCart::getModel();
 		$add_data->user_id = $request->user()->id;
 		$add_data->order_id = ModelCart::max('order_id') +1;
 		if($add_data->save()){
@@ -57,48 +54,10 @@ class AdminCartController extends Controller
         return back();
 	}
 
-	/**
-	 * Изменение товаров в заказе
-	 * @param Request $request
-	 *
-	 * @return AdminCartController|\Illuminate\Http\RedirectResponse
-     */
-	public function store(Request $request)
-	{
-		$order = ModelCart::whereId($request->get('order_id'))->first();
-		$get_tovar = LarrockCatalog::getModel()->whereId($request->get('id'))->first();
-		$qty = $request->get('qty', 1);
-		$options = $request->get('options', []);
-		if( !empty($options)){
-			$options = (array) json_decode($options);
-		}
-		/** @noinspection PhpVoidFunctionResultUsedInspection */
-		Cart::instance('editer')->add($request->get('id'), $get_tovar->title, $qty, $get_tovar->cost, $options)->associate(LarrockCatalog::getModelName());
-
-		/** @noinspection ForeachSourceInspection */
-		foreach($order->items as $item){
-			/** @noinspection PhpVoidFunctionResultUsedInspection */
-			Cart::instance('editer')->add($item->id, $item->name, $item->qty, $item->price, $options)->associate(LarrockCatalog::getModelName());
-		}
-
-		$order->items = Cart::instance('editer')->content();
-		$order->cost = Cart::instance('editer')->total();
-		Cart::instance('editer')->destroy();
-		if($order->save()){
-			Alert::add('successAdmin', 'Заказ #'. $order->order_id .' изменен')->flash();
-			$this->mailFullOrderChange($request, $order);
-			\Cache::flush();
-			return back();
-		}
-
-		Alert::add('errorAdmin', 'Заказ #'. $order->order_id .' не изменен')->flash();
-		return back()->withInput();
-	}
-
 	public function removeItem(Request $request)
 	{
 		$id = $request->get('id');
-		$order = ModelCart::whereOrderId($request->get('order_id'))->firstOrFail();
+		$order = LarrockCart::getModel()->whereOrderId($request->get('order_id'))->firstOrFail();
 		$items = collect($order->items);
 		$order->cost -= $order->items->{$id}->subtotal;
 		$order->items = $items->forget($request->get('id'));
@@ -127,7 +86,7 @@ class AdminCartController extends Controller
             return back()->withInput($request->except('password'))->withErrors($validator);
         }
 
-		$data = ModelCart::find($id);
+		$data = LarrockCart::getModel()->find($id);
 		$need_mailIt = NULL; //нужно ли отправлять уведомление по email покупателю
 		$subject = NULL; //Тема письма
 		if($data->status_order !== $request->get('status_order')){
@@ -140,7 +99,7 @@ class AdminCartController extends Controller
 		}
 
 		$data->fill($request->all());
-        $data->user_id = $request->user()->id;
+        $data->user = $request->user()->id;
 
 		if($data->save()){
 			if($need_mailIt){
@@ -164,7 +123,7 @@ class AdminCartController extends Controller
      */
 	public function editQtyItem(Request $request, $id)
 	{
-		$order = ModelCart::whereOrderId($request->get('order_id'))->firstOrFail();
+		$order = LarrockCart::getModel()->whereOrderId($request->get('order_id'))->firstOrFail();
 		$items = $order->items;
 		$items->{$id}->qty = $request->get('qty', 1);
 		$order->cost -= $items->{$id}->subtotal;
@@ -210,7 +169,7 @@ class AdminCartController extends Controller
 	 */
 	public function destroy($id)
 	{
-		$data = ModelCart::find($id);
+		$data = LarrockCart::getModel()->find($id);
 		if($data->delete()){
 			$this->mailFullOrderDelete($data);
 			Alert::add('successAdmin', 'Заказ успешно удален')->flash();
@@ -277,14 +236,14 @@ class AdminCartController extends Controller
 
 	public function docCheck($id)
 	{
-		$data['data'] = ModelCart::whereOrderId($id)->firstOrFail();
+		$data['data'] = LarrockCart::getModel()->whereOrderId($id)->firstOrFail();
 		$data['all_cost_string'] = $this->num_propis($data['data']->cost);
 		return view('larrock::admin.cart.doc_check', $data);
 	}
 
 	public function docDelivery($id)
 	{
-		$data['data'] = ModelCart::whereOrderId($id)->firstOrFail();
+		$data['data'] = LarrockCart::getModel()->whereOrderId($id)->firstOrFail();
 		return view('larrock::admin.cart.doc_delivery', $data);
 	}
 

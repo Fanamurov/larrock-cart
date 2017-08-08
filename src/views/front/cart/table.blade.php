@@ -19,16 +19,20 @@
             @foreach($cart as $row)
                 <tr class="cart_item_row" data-rowid="{{ $row->rowId }}">
                     <td class="tovar_image uk-hidden-small">
-                        <a href="{{ $row->model->getFirstImage->getUrl() }}" target="_blank">
-                            <img src="{{ $row->model->getFirstImage->getUrl('140x140') }}" alt="{{ $row->name }}" class="all-width">
-                        </a>
-                    </td>
-                    <td class="description-row">
-                        <div class="uk-hidden-medium uk-hidden-large">
+                        @if($row->model->getFirstImage)
                             <a href="{{ $row->model->getFirstImage->getUrl() }}" target="_blank">
                                 <img src="{{ $row->model->getFirstImage->getUrl('140x140') }}" alt="{{ $row->name }}" class="all-width">
                             </a>
-                        </div>
+                        @endif
+                    </td>
+                    <td class="description-row">
+                        @if($row->model->getFirstImage)
+                            <div class="uk-hidden-medium uk-hidden-large">
+                                <a href="{{ $row->model->getFirstImage->getUrl() }}" target="_blank">
+                                    <img src="{{ $row->model->getFirstImage->getUrl('140x140') }}" alt="{{ $row->name }}" class="all-width">
+                                </a>
+                            </div>
+                        @endif
                         <p class="uk-h4"><a href="{{ $row->model->full_url }}">{{ $row->name }}</a></p>
                         <div class="item-options">
                             @foreach($app->rows as $row_key => $config_row)
@@ -70,7 +74,7 @@
                     <td class="uk-hidden-small uk-text-right"><button type="button" class="removeCartItem uk-button uk-button-danger uk-button-small" data-rowid="{{ $row->rowId }}">Удалить</button></td>
                 </tr>
             @endforeach
-            @if($discount['profit'] > 0)
+            @if(isset($discount) && $discount['profit'] > 0)
                 <tr>
                     <td colspan="6">
                         <p class="uk-text-right row-total uk-text-muted">Сумма: <strong class="total">{!! Cart::instance('main')->total() !!}</strong> руб.</p>
@@ -91,7 +95,7 @@
                     </td>
                 </tr>
             @else
-                <tr>
+                <tr class="total-row">
                     <td colspan="6">
                         <p class="uk-text-right row-total">Всего к оплате: <strong class="total">{!! Cart::instance('main')->total() !!}</strong> руб.</p>
                     </td>
@@ -101,7 +105,7 @@
         </table>
     </form>
 
-    @if(count($discount_motivate) > 0)
+    @if(isset($discount) && count($discount_motivate) > 0)
     <div class="uk-grid">
         <div class="uk-width-1-1">
             <p class="uk-h4">Накопительные скидки в корзине:</p>
@@ -121,7 +125,7 @@
     </div>
     @endif
 
-    <div class="uk-grid">
+    <div class="uk-grid uk-margin-large-top">
         <div class="uk-width-1-1">
             @include('larrock::front.modules.forms.orderFull')
         </div>

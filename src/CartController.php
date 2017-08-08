@@ -392,7 +392,7 @@ class CartController extends Controller
             $total = $discounts['cost_after_discount'];
             $profit = $discounts['profit'];
         }else{
-            $total = $cost*$qty;
+            $total = Cart::instance('main')->total();
             $profit = 0;
         }
 
