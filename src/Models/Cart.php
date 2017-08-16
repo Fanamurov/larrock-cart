@@ -64,6 +64,14 @@ class Cart extends Model
 {
     use SearchableTrait;
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->fillable(LarrockCart::addFillableUserRows(['order_id', 'items', 'cost', 'cost_discount', 'kupon', 'status_order', 'status_pay',
+		'method_pay', 'method_delivery', 'comment', 'comment_admin', 'address', 'tel', 'email', 'fio', 'pay_at', 'invoiceId', 'discount']));
+        $this->table = LarrockCart::getConfig()->table;
+    }
+
     protected $searchable = [
         'columns' => [
             'cart.status_order' => 10,
@@ -73,11 +81,6 @@ class Cart extends Model
             'cart.fio' => 30,
         ]
     ];
-
-    protected $table = 'cart';
-
-	protected $fillable = ['order_id', 'items', 'cost', 'cost_discount', 'kupon', 'status_order', 'status_pay',
-		'method_pay', 'method_delivery', 'comment', 'comment_admin', 'address', 'tel', 'email', 'fio', 'pay_at', 'invoiceId', 'discount'];
 
 	protected $casts = [
 		'order_id' => 'integer',
