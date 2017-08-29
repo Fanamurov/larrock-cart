@@ -23,5 +23,15 @@
         "fanamurov/larrock-catalog": "^0.1",
         "fanamurov/larrock-category": "^0.1",
         "fanamurov/larrock-users": "^0.1"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Larrock\\ComponentCart\\LarrockComponentCartServiceProvider"
+            ],
+            "aliases": {
+                "LarrockCart": "Larrock\\ComponentCart\\Facades\\LarrockCart"
+            }
+        }
     }
 }
