@@ -2,10 +2,11 @@
 
 namespace Larrock\ComponentCart\Models;
 
-use Larrock\ComponentCatalog\Models\Catalog;
-use Larrock\ComponentUsers\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Larrock\ComponentCatalog\Facades\LarrockCatalog;
+use Larrock\ComponentUsers\Facades\LarrockUsers;
 use Nicolaslopezj\Searchable\SearchableTrait;
+use Larrock\ComponentCart\Facades\LarrockCart;
 
 /**
  * App\Models\Cart
@@ -93,7 +94,7 @@ class Cart extends Model
 		$items = json_decode($value);
 		if(is_array($items) || is_object($items)){
 			foreach($items as $item_key => $item_value){
-				$items->{$item_key}->catalog = Catalog::whereId($item_value->id)->with(['getImages'])->first();
+				$items->{$item_key}->catalog = LarrockCatalog::getModel()->whereId($item_value->id)->with(['getImages'])->first();
 			}
 			return $items;
 		}
@@ -102,6 +103,6 @@ class Cart extends Model
 
 	public function get_user()
 	{
-		return $this->hasOne(User::class, 'id', 'user');
+		return $this->hasOne(LarrockUsers::getModelName(), 'id', 'user');
 	}
 }
