@@ -32,7 +32,7 @@
                 </td>
             @else
                 <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;">
-                    @if(isset($item->catalog->full_url))
+                    @if(isset($item->catalog->full_url) && $item->catalog->getFirstImage)
                         <a href="{!! $item->catalog->full_url !!}">
                             <img class="all-width" src="http://{{ $_SERVER['SERVER_NAME'] }}{!! $item->catalog->getFirstImage->getUrl('140x140') !!}">
                         </a>

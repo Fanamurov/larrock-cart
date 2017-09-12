@@ -78,7 +78,7 @@ class CartController extends Controller
         $mails = collect(array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru'))));
 
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-        Mail::send('emails.orderShort',
+        Mail::send('larrock::emails.orderShort',
             ['name' => $request->get('name'),
                 'contact' => $request->get('contact'),
                 'comment' => $request->get('comment'),
@@ -174,7 +174,7 @@ class CartController extends Controller
         $create_order->fio = $request->get('fio');
         $create_order->kupon = $request->get('kupon');
         $create_order->comment = $request->get('comment');
-        if( !$order_id = CartModel::max('order_id')){
+        if( !$order_id = LarrockCart::getModel()->max('order_id')){
             $order_id = 0;
         }
         $create_order->order_id = ++$order_id;
@@ -297,12 +297,15 @@ class CartController extends Controller
             return back()->withInput($request->all());
         }
 
-        $validator = Validator::make($request->all(), LarrockUsers::getValid());
+        $validator = Validator::make($request->all(), [
+            'email' => 'required',
+            'password' => 'required',
+        ]);
         if($validator->fails()){
             return back()->withInput()->withErrors($validator);
         }
 
-        User::create([
+        LarrockUsers::getModel()->create([
             'email' => $request->get('email'),
             'first_name' => $request->get('first_name'),
             'last_name' => $request->get('last_name'),
@@ -327,14 +330,14 @@ class CartController extends Controller
      * @param Request $request
      * @param User    $user
      */
-    public function mailRegistry(Request $request, User $user)
+    public function mailRegistry(Request $request, $user)
     {
         //FormsLog::create(['formname' => 'register', 'params' => $request->all(), 'status' => 'Новое']);
 
         $mails = collect(array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru'))));
 
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-        $send = Mail::send('emails.register', ['data' => $user->toArray()],
+        $send = Mail::send('larrock::emails.register', ['data' => $user->toArray()],
             function($message) use ($mails){
                 $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
                 foreach($mails as $value){

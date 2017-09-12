@@ -19,14 +19,15 @@
                                 Метод оплаты не подключен
                             @endif
                         @else
-                            <span class="not-pay">{{ $data->status_pay }}</span>
+                            <p class="not-pay">{{ $data->status_pay }}</p>
                         @endif
                     @else
-                        <span class="success-pay">Оплачено {{ $data->cost }} руб.</span>
+                        <p class="success-pay">Оплачено {{ $data->cost }} руб.</p>
                     @endif
                 </div>
                 <div class="uk-clearfix"></div>
                 <p class="uk-text-muted">Метод оплаты: {{ $data->method_pay }}</p>
+                <p class="uk-text-muted">Тип плательщика: {{ $data->type_costumer }}</p>
                 <p class="uk-text-muted">Метод доставки: {{ $data->method_delivery }}</p>
                 <p class="uk-text-muted">
                     {{ $data->fio}},
@@ -60,7 +61,7 @@
                 @foreach($data->items as $item)
                     <tr>
                         <td class="tovar_image uk-hidden-small">
-                            @if($item->catalog)
+                            @if($item->catalog && $item->catalog->getFirstImage)
                                 <img src="{{ $item->catalog->getFirstImage->getUrl('140x140') }}" alt="{{ $item->name }}" class="all-width">
                             @else
                                 <img src="/_assets/_front/_images/empty_big.png" alt="Not Photo" class="all-width">
