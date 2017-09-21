@@ -189,16 +189,14 @@ class AdminCartController extends Controller
 		//FormsLog::create(['formname' => 'order', 'params' => $request->all(), 'status' => 'Новое']);
 		$order->status_order = 'Удален';
 
-		$mails = collect(array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru'))));
+		$mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
 
 		$subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' удален';
         /** @noinspection PhpVoidFunctionResultUsedInspection */
 		Mail::send('emails.orderFull-delete', ['data' => $order->toArray(), 'subject' => $subject],
 			function($message) use ($mails, $subject){
 				$message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
-				foreach($mails as $value){
-					$message->to($value);
-				}
+				$message->to($mails);
 				$message->subject($subject);
 			});
 
@@ -216,7 +214,7 @@ class AdminCartController extends Controller
 	{
 		//FormsLog::create(['formname' => 'order', 'params' => $request->all(), 'status' => 'Новое']);
 
-		$mails = collect(array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru'))));
+		$mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
 
 		if( !$subject){
 			$subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' изменен';
@@ -225,9 +223,7 @@ class AdminCartController extends Controller
 		Mail::send('emails.orderFull-delete', ['data' => $order->toArray(), 'subject' => $subject],
 			function($message) use ($mails, $subject){
 				$message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
-				foreach($mails as $value){
-					$message->to($value);
-				}
+				$message->to($mails);
 				$message->subject($subject);
 			});
 

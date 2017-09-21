@@ -1,9 +1,9 @@
 <div class="moduleCart">
     <p class="cart-empty @if(Cart::instance('main')->count() > 0) uk-hidden @endif"><i class="uk-icon-shopping-cart"></i> Корзина пуста</p>
     <p class="cart-show @if(Cart::instance('main')->count() < 1) uk-hidden @endif">
-        <a href="/cart">
+        <a href="/cart" class="uk-text-nowrap">
             <span class="flaticon flaticon-shopping-cart"></span>
-            В корзине на сумму <span class="total_cart text">
+            Корзина: <span class="total_cart text">
                 @if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount') && $discountsShare['profit'] > 0)
                     {{ $discountsShare['cost_after_discount'] }}
                 @else

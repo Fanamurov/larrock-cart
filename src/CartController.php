@@ -75,7 +75,7 @@ class CartController extends Controller
 
     public function sendOrderShort(Request $request)
     {
-        $mails = collect(array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru'))));
+        $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
 
         /** @noinspection PhpVoidFunctionResultUsedInspection */
         Mail::send('larrock::emails.orderShort',
@@ -85,9 +85,7 @@ class CartController extends Controller
                 'cart'  =>  Cart::content()],
             function($message) use ($mails){
                 $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
-                foreach($mails as $value){
-                    $message->to($value);
-                }
+                $message->to($mails);
                 $message->subject('Отправлена форма заявки '. array_get($_SERVER, 'HTTP_HOST')
                 );
             });
@@ -199,16 +197,14 @@ class CartController extends Controller
     {
         \Log::info('NEW ORDER #'. $order->order_id .'. Order: '. json_encode($order));
 
-        $mails = collect(array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru'))));
+        $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
 
         $subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' успешно оформлен';
         /** @noinspection PhpVoidFunctionResultUsedInspection */
         Mail::send('larrock::emails.orderFull', ['data' => $order->toArray(), 'subject' => $subject],
             function($message) use ($mails, $subject){
                 $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
-                foreach($mails as $value){
-                    $message->to($value);
-                }
+                $message->to($mails);
                 $message->subject($subject);
             });
 
@@ -332,17 +328,13 @@ class CartController extends Controller
      */
     public function mailRegistry(Request $request, $user)
     {
-        //FormsLog::create(['formname' => 'register', 'params' => $request->all(), 'status' => 'Новое']);
-
-        $mails = collect(array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru'))));
+        $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
 
         /** @noinspection PhpVoidFunctionResultUsedInspection */
         $send = Mail::send('larrock::emails.register', ['data' => $user->toArray()],
             function($message) use ($mails){
                 $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
-                foreach($mails as $value){
-                    $message->to($value);
-                }
+                $message->to($mails);
                 $message->subject('Вы успешно зарегистрировались на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST'))
                 );
             });

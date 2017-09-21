@@ -64,13 +64,13 @@
                             </p>
                         @endif
                         <div class="subtotal uk-hidden-medium uk-hidden-large">
-                            <small class="uk-text-muted">x</small> <span class="price-item">{{ $row->price }}</span> <small class="uk-text-muted">=</small>
-                            <span>{{ $row->subtotal }}</span> руб.
+                            <small class="uk-text-muted">x</small> <span class="price-item">{{ number_format($row->price, 2, ',', ' ') }}</span> <small class="uk-text-muted">=</small>
+                            <span>{{ number_format($row->subtotal, 2, ',', ' ') }}</span> руб.
                         </div>
                         <button type="button" class="removeCartItem uk-button uk-button-danger uk-hidden-medium uk-hidden-large uk-width-1-1 button-remove-phone" data-rowid="{{ $row->rowId }}">Удалить</button>
                     </td>
-                    <td class="cost-row uk-hidden-small"><small class="uk-text-muted">x</small> <span class="price-item">{{ $row->price }}</span> <small class="uk-text-muted">=</small></td>
-                    <td class="subtotal uk-hidden-small uk-text-right"><span>{{ $row->subtotal }}</span> руб.</td>
+                    <td class="cost-row uk-hidden-small"><small class="uk-text-muted">x</small> <span class="price-item">{{ number_format($row->price, 2, ',', ' ') }}</span> <small class="uk-text-muted">=</small></td>
+                    <td class="subtotal uk-hidden-small uk-text-right"><span>{{ number_format($row->subtotal, 2, ',', ' ') }}</span> руб.</td>
                     <td class="uk-hidden-small uk-text-right"><button type="button" class="removeCartItem uk-button uk-button-danger uk-button-small" data-rowid="{{ $row->rowId }}">Удалить</button></td>
                 </tr>
             @endforeach
