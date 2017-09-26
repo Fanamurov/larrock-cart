@@ -32,6 +32,9 @@ Route::group(['middleware' => $middlewares], function(){
     Route::get('/cart/fail', [
         'as' => 'cart.fail', 'uses' => UserController::class .'@cabinet'
     ]);
+    Route::get('/cart/oferta', [
+        'as' => 'cart.oferta', 'uses' => CartController::class .'@oferta'
+    ]);
 
     Route::post('/ajax/cartAdd', [
         'as' => 'ajax.cartAdd', 'uses' => CartController::class .'@cartAdd'

@@ -45,6 +45,15 @@ class CartComponent extends Component
             ->setDefaultValue('самовывоз')
             ->setOptions(['самовывоз', 'курьером (в черте Хабаровска)', 'доставка по России']);
 
+        $row = new FormTextarea('address', 'Адрес доставки');
+        $this->rows['address'] = $row;
+
+        $row = new FormInput('fio', 'ФИО получателя');
+        $this->rows['fio'] = $row;
+
+        $row = new FormInput('tel', 'Телефон');
+        $this->rows['tel'] = $row;
+
         $row = new FormInput('cost', 'Стоимость заказа');
         $this->rows['cost'] = $row->setDefaultValue(0)->setInTableAdmin();
 
@@ -69,5 +78,10 @@ class CartComponent extends Component
             return LarrockCart::getModel()->count(['id']);
         });
         return view('larrock::admin.sectionmenu.types.default', ['count' => $count, 'app' => LarrockCart::getConfig(), 'url' => '/admin/'. LarrockCart::getName()]);
+    }
+
+    public function toDashboard()
+    {
+        return view('larrock::admin.dashboard.cart', ['component' => LarrockCart::getConfig(), 'data' => LarrockCart::getModel()->latest('created_at')->get()]);
     }
 }

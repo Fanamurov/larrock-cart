@@ -1,15 +1,24 @@
 <div class="moduleCart">
     <p class="cart-empty @if(Cart::instance('main')->count() > 0) uk-hidden @endif"><i class="uk-icon-shopping-cart"></i> Корзина пуста</p>
     <p class="cart-show @if(Cart::instance('main')->count() < 1) uk-hidden @endif">
-        <a href="/cart" class="uk-text-nowrap">
-            <span class="flaticon flaticon-shopping-cart"></span>
-            Корзина: <span class="total_cart text">
-                @if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount') && $discountsShare['profit'] > 0)
-                    {{ $discountsShare['cost_after_discount'] }}
+        <a href="/cart">
+            <span class="uk-icon-shopping-cart"></span>
+            <span class="cart-text">
+            @if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount') && $discountsShare['profit'] > 0)
+                @if($discountsShare['cost_after_discount'] > 0)
+                    В корзине на сумму <span class="total_cart text">{{ $discountsShare['cost_after_discount'] }}</span> р.
                 @else
-                    {!! Cart::instance('main')->total() !!}
+                    В корзине товаров: {{ Cart::instance('main')->count() }}
                 @endif
-            </span> р.
+            @else
+                @if(Cart::instance('main')->total() > 0)
+                    В корзине на сумму <span class="total_cart text">{!! Cart::instance('main')->total() !!}</span> р.
+                @else
+                    В корзине товаров: {{ Cart::instance('main')->count() }}
+                @endif
+            @endif
+            </span>
+
             @if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount') && $discountsShare['profit'] > 0)
                 <span class="moduleCart-discount_row" @if($discountsShare['profit'] < 1) style="display: none" @endif>скидка: <span class="total_discount_cart">{{ $discountsShare['profit'] }}</span> р.</span>
             @endif

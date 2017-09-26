@@ -170,6 +170,10 @@ class AdminCartController extends Controller
 	public function destroy($id)
 	{
 		$data = LarrockCart::getModel()->find($id);
+		if( !$data){
+            Alert::add('errorAdmin', 'Такого заказа на сайте уже нет')->flash();
+            return back();
+        }
 		if($data->delete()){
 			$this->mailFullOrderDelete($data);
 			Alert::add('successAdmin', 'Заказ успешно удален')->flash();
@@ -186,20 +190,21 @@ class AdminCartController extends Controller
 	 */
 	public function mailFullOrderDelete($order)
 	{
-		//FormsLog::create(['formname' => 'order', 'params' => $request->all(), 'status' => 'Новое']);
 		$order->status_order = 'Удален';
 
 		$mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
+        $mails[] = $order->email;
 
 		$subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' удален';
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-		Mail::send('emails.orderFull-delete', ['data' => $order->toArray(), 'subject' => $subject],
+		Mail::send('larrock::emails.orderFull-delete', ['data' => $order->toArray(), 'subject' => $subject],
 			function($message) use ($mails, $subject){
 				$message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
-				$message->to($mails);
+                $message->to($mails);
 				$message->subject($subject);
 			});
 
+        \Log::info('ORDER DELETE: #'. $order->order_id .'. Order: '. json_encode($order));
         Alert::add('successAdmin', 'На email покупателя отправлено письмо с деталями заказа')->flash();
 	}
 
@@ -212,21 +217,21 @@ class AdminCartController extends Controller
 	 */
 	public function mailFullOrderChange(Request $request, $order, $subject = NULL)
 	{
-		//FormsLog::create(['formname' => 'order', 'params' => $request->all(), 'status' => 'Новое']);
-
 		$mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
+        $mails[] = $order->email;
 
 		if( !$subject){
 			$subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' изменен';
 		}
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-		Mail::send('emails.orderFull-delete', ['data' => $order->toArray(), 'subject' => $subject],
+		Mail::send('larrock::emails.orderFull-delete', ['data' => $order->toArray(), 'subject' => $subject],
 			function($message) use ($mails, $subject){
 				$message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
-				$message->to($mails);
+                $message->to($mails);
 				$message->subject($subject);
 			});
 
+        \Log::info('ORDER CHANGE: #'. $order->order_id .'. Order: '. json_encode($order));
         Alert::add('successAdmin', 'На email покупателя отправлено письмо с деталями заказа')->flash();
 	}
 

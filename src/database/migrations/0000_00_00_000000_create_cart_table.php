@@ -26,10 +26,10 @@ class CreateCartTable extends Migration {
 			$table->float('cost_discount', 10)->nullable();
 			$table->text('discount')->nullable();
 			$table->char('kupon')->nullable();
-			$table->char('status_order')->default('');
-			$table->char('status_pay')->default('');
-			$table->char('method_pay')->default('');
-			$table->char('method_delivery')->default('');
+			$table->char('status_order')->nullable();
+			$table->char('status_pay')->nullable();
+			$table->char('method_pay')->nullable();
+			$table->char('method_delivery')->nullable();
 			$table->text('comment')->nullable();
 			$table->text('comment_admin')->nullable();
 			$table->integer('position')->default(0);

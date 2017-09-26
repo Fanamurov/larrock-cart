@@ -102,15 +102,19 @@ class CartController extends Controller
      */
     public function sendOrderFull(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $validator_rules = [
             'email' => 'required|email',
-            'tel' => 'required',
-            'fio' => 'required',
-            'delivery-method' => 'required',
-            'pay-method' => 'required',
-            'address' => 'required',
             'oferta' => 'accepted'
-        ]);
+        ];
+        $app = LarrockCart::getConfig()->rows;
+        $except_rows = ['order_id', 'status_order', 'status_pay'];
+        foreach ($app as $row){
+            if(strpos($row->valid, 'required') && !in_array($row->name, $except_rows)){
+                $validator_rules[$row->name] = $row->valid;
+            }
+        }
+
+        $validator = Validator::make($request->all(), $validator_rules);
         //ВАЛИДАЦИЯ КАПТЧИ!
         if($validator->fails()){
             return back()->withErrors($validator)->withInput($request->all());
@@ -173,7 +177,7 @@ class CartController extends Controller
         $create_order->kupon = $request->get('kupon');
         $create_order->comment = $request->get('comment');
         if( !$order_id = LarrockCart::getModel()->max('order_id')){
-            $order_id = 0;
+            $order_id = 1;
         }
         $create_order->order_id = ++$order_id;
 
@@ -313,11 +317,11 @@ class CartController extends Controller
 
         if($user = LarrockUsers::getModel()->whereEmail($request->input('email'))->first()){
             $user->attachRole(3); //role user
-            Alert::add('success', 'Покупатель '. $request->input('email') .' успешно добавлен')->flash();
+            Alert::add('success', 'Пользователь '. $request->input('email') .' успешно зарегистрирован')->flash();
             $this->mailRegistry($request, $user);
             return $user;
         }
-        Alert::add('error', 'Покупатель '. $request->input('email') .' не был добавлен')->flash();
+        Alert::add('error', 'Пользователь '. $request->input('email') .' не был добавлен')->flash();
         return back()->withInput($request->all());
     }
 
@@ -328,7 +332,10 @@ class CartController extends Controller
      */
     public function mailRegistry(Request $request, $user)
     {
+        \Log::info('NEW USER REGISTRY ID#'. $user->id .' email:'. $user->email);
+
         $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
+        $mails[] = $user->email;
 
         /** @noinspection PhpVoidFunctionResultUsedInspection */
         $send = Mail::send('larrock::emails.register', ['data' => $user->toArray()],
@@ -361,6 +368,9 @@ class CartController extends Controller
             $cost = $get_tovar->cost;
         }
         $qty = $request->get('qty', 1);
+        if($qty < 1){
+            $qty = 1;
+        }
         $options = $request->get('options', []);
         if( !empty($options)){
             $options = (array) json_decode($options);
@@ -391,7 +401,7 @@ class CartController extends Controller
             $profit = 0;
         }
 
-        return response()->json(['status' => 'success', 'message' => 'Товар добавлен в корзину', 'total' => $total, 'total_discount' => $profit]);
+        return response()->json(['status' => 'success', 'message' => 'Товар добавлен в корзину', 'total' => $total, 'total_discount' => $profit, 'count' => Cart::instance('main')->count()]);
     }
 
     /**
@@ -475,7 +485,7 @@ class CartController extends Controller
     public function cartRemove(Request $request)
     {
         Cart::instance('main')->remove($request->get('rowid'));
-        return response(Cart::total());
+        return response(Cart::count());
     }
 
     /**
@@ -487,5 +497,15 @@ class CartController extends Controller
     {
         Cart::instance('main')->count();
         return response('OK');
+    }
+
+    /**
+     * Страница договора-оферты магазина
+     *
+     * @return array|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function oferta()
+    {
+        return view('larrock::front.cart.oferta');
     }
 }
