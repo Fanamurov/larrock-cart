@@ -202,6 +202,7 @@ class CartController extends Controller
         \Log::info('NEW ORDER #'. $order->order_id .'. Order: '. json_encode($order));
 
         $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
+        $mails[] = $order->email;
 
         $subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' успешно оформлен';
         /** @noinspection PhpVoidFunctionResultUsedInspection */
