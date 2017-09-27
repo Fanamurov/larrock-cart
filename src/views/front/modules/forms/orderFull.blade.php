@@ -19,6 +19,7 @@
             <div class="uk-width-1-1">
                 <div class="uk-form-row">
                     <label for="email"><span class="uk-text-muted">Ваш email:</span> @if(Auth::guard()->check()){!! Auth::guard()->user()->email !!}@endif<span class="text-muted"><sup>*он же логин</sup></span></label>
+                    <a class="uk-button uk-align-right" href="/user/logout"><i class="uk-icon-close"></i> Выйти</a>
                     <input type="hidden" name="email" id="email" tabindex="1"
                            value="@if(Auth::guard()->check() && empty(old('email'))){!! Auth::guard()->user()->email !!}@else {{ old('email') }} @endif">
                 </div>

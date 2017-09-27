@@ -33,7 +33,11 @@
                                 </a>
                             </div>
                         @endif
-                        <p class="uk-h4"><a href="{{ $row->model->full_url }}">{{ $row->name }}</a></p>
+                        @if(config('larrock.catalog.ShowItemPage') === true)
+                            <p class="uk-h4"><a href="{{ $row->model->full_url }}">{{ $row->name }}</a></p>
+                        @else
+                            <p class="uk-h4">{{ $row->name }}</p>
+                        @endif
                         <div class="item-options">
                             @foreach($app->rows as $row_key => $config_row)
                                 @if($config_row->template === 'in_card' && isset($row->model->{$row_key}) && !empty($row->model->{$row_key}))
@@ -50,27 +54,30 @@
                                    data-min="1" step="1" data-rowid="{{ $row->rowId }}">
                             <button class="addon-what uk-button" data-spin="up">+</button>
                         </div>
-                        @if(isset($row->model->id))
-                            <p class="uk-hidden">
-                                @if($row->model->arrival_date > \Carbon\Carbon::now())
-                                    <small class="uk-text-muted">дата поступления: {{ $row->model->arrival_date->format('d.m.Y') }}г.</small>
-                                @else
-                                    @if($row->model->nalichie > 0)
-                                        <small class="uk-text-muted">в наличии <span class="nalichie" data-count="{{ $row->model->nalichie }}">{{ $row->model->nalichie }}</span> шт.</small>
-                                    @else
-                                        <small class="uk-text-muted">под заказ</small>
-                                    @endif
-                                @endif
-                            </p>
-                        @endif
                         <div class="subtotal uk-hidden-medium uk-hidden-large">
-                            <small class="uk-text-muted">x</small> <span class="price-item">{{ $row->price }}</span> <small class="uk-text-muted">=</small>
-                            <span>{{ $row->subtotal }}</span> руб.
+                            @if($row->price > 0)
+                                <small class="uk-text-muted">x</small> <span class="price-item">{{ $row->price }}</span> <small class="uk-text-muted">=</small>
+                                <span class="subtotal">{{ $row->subtotal }}</span> руб.
+                            @else
+                                <small class="uk-text-muted subtotal">договорная</small>
+                            @endif
                         </div>
                         <button type="button" class="removeCartItem uk-button uk-button-danger uk-hidden-medium uk-hidden-large uk-width-1-1 button-remove-phone" data-rowid="{{ $row->rowId }}">Удалить</button>
                     </td>
-                    <td class="cost-row uk-hidden-small"><small class="uk-text-muted">x</small> <span class="price-item">{{ $row->price }}</span> <small class="uk-text-muted">=</small></td>
-                    <td class="subtotal uk-hidden-small uk-text-right"><span>{{ $row->subtotal }}</span> руб.</td>
+                    <td class="cost-row uk-hidden-small">
+                        @if($row->price > 0)
+                            <small class="uk-text-muted">x</small> <span class="price-item">{{ $row->price }}</span> <small class="uk-text-muted">=</small>
+                        @else
+                            <small class="uk-text-muted">договорная</small>
+                        @endif
+                    </td>
+                    <td class="subtotal uk-hidden-small uk-text-right">
+                        @if($row->price > 0)
+                            <span class="subtotal">{{ $row->subtotal }}</span> руб.
+                        @else
+                            <small class="uk-text-muted subtotal">договорная</small>
+                        @endif
+                    </td>
                     <td class="uk-hidden-small uk-text-right"><button type="button" class="removeCartItem uk-button uk-button-danger uk-button-small" data-rowid="{{ $row->rowId }}">Удалить</button></td>
                 </tr>
             @endforeach
