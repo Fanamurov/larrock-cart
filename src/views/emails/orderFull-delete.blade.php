@@ -15,14 +15,28 @@
     margin-left: 0;
     text-align: left;">{{ $subject }}</h1>
     <h2 style="font-family: Arial, sans-serif; margin-bottom: 10px; font-size: 18px;">Статус заказа: {{ $data['status_order'] }}</h2>
-    <h2 style="font-family: Arial, sans-serif; margin-top: 0;font-size: 18px; margin-bottom: 35px;">Статус оплаты: {{ $data['status_pay'] }}</h2>
-    <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">ФИО: <strong>{{ $data['fio'] }}</strong></p>
-    <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Email/логин в личный кабинет: <strong>{{ $data['email'] }}</strong></p>
-    <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Телефон: <strong>{{ $data['tel'] }}</strong></p>
-    <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Адрес доставки: <strong>{{ $data['address'] }}</strong></p>
-    <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Метод доставки: <strong>{{ $data['method_delivery'] }}</strong></p>
-    <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Метод оплаты: <strong>{{ $data['method_pay'] }}</strong></p>
-    @if( !empty($data['comment']))
+    @if(isset($app->rows['status_pay']) && !empty($data['status_pay']))
+        <h2 style="font-family: Arial, sans-serif; margin-top: 0;font-size: 18px; margin-bottom: 35px;">Статус оплаты: {{ $data['status_pay'] }}</h2>
+    @endif
+    @if(isset($app->rows['fio']) && !empty($data['fio']))
+        <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">ФИО: <strong>{{ $data['fio'] }}</strong></p>
+    @endif
+    @if(isset($app->rows['email']) && !empty($data['email']))
+        <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Email/логин в личный кабинет: <strong>{{ $data['email'] }}</strong></p>
+    @endif
+    @if(isset($app->rows['tel']) && !empty($data['tel']))
+        <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Телефон: <strong>{{ $data['tel'] }}</strong></p>
+    @endif
+    @if(isset($app->rows['address']) && !empty($data['address']))
+        <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Адрес доставки: <strong>{{ $data['address'] }}</strong></p>
+    @endif
+    @if(isset($app->rows['method_delivery']) && !empty($data['method_delivery']))
+        <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Метод доставки: <strong>{{ $data['method_delivery'] }}</strong></p>
+    @endif
+    @if(isset($app->rows['method_pay']) && !empty($data['method_pay']))
+        <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Метод оплаты: <strong>{{ $data['method_pay'] }}</strong></p>
+    @endif
+    @if(isset($app->rows['comment']) && !empty($data['comment']))
         <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Комментарий к заказу: <strong>{{ $data['comment'] }}</strong></p>
     @endif
 
@@ -105,7 +119,7 @@
                     @if($data['cost'] > 0)
                         <strong>Всего к оплате: {!! $data['cost'] !!} руб.</strong>
                     @else
-                        <strong>Все к оплате: по договоренности</strong>
+                        <strong>Всего к оплате: по договоренности</strong>
                     @endif
                 </td>
             </tr>

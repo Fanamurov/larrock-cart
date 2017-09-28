@@ -23,14 +23,12 @@ class OrderFullRequest extends FormRequest
      */
     public function rules()
     {
-		return [
-			'email' => 'required|email',
-			'tel' => 'required',
-			'delivery-method' => 'required',
-			'pay-method' => 'required',
-			'address' => 'required',
-			'fio' => 'required',
-			'oferta' => 'accepted'
-		];
+        return [
+            'email' => 'required_without:without_registry|email',
+            'tel' => 'required',
+            'address' => 'required',
+            'fio' => 'required',
+            'oferta' => 'accepted'
+        ];
     }
 }

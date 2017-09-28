@@ -11,8 +11,15 @@
             </div>
             <div class="uk-width-1-1 uk-width-medium-1-2">
                 <div class="uk-form-row">
-                    <label for="password" class="uk-form-label">Придумайте пароль:</label>
+                    <label for="password" class="uk-form-label">Введите пароль или придумайте новый:</label>
                     <input type="text" name="password" id="password" required tabindex="2" class="uk-width-1-1 uk-form-large">
+                </div>
+            </div>
+            <div class="uk-width-1-1 uk-width-medium-1-1">
+                <div class="uk-form-row uk-margin-top">
+                    <label for="without_registry" class="uk-form-label">
+                        <input type="checkbox" name="without_registry" id="without_registry" value="true"> Сделать заказ без регистрации (email не обязателен, пароль не требуются)
+                    </label>
                 </div>
             </div>
         @else
@@ -30,16 +37,16 @@
         <div class="uk-width-1-1 uk-width-medium-5-10">
             @if(isset($app->rows['fio']))
                 <div class="uk-form-row">
-                    <label for="fio" class="uk-form-label">ФИО получателя:</label>
+                    <label for="fio" class="uk-form-label">ФИО или название компании:</label>
                     <input type="text" name="fio" id="fio" class="uk-width-1-1 uk-form-large"
-                           value="@if(Auth::guard()->check() && empty(old('fio'))){!! Auth::guard()->user()->fio !!}@else {{ old('fio') }} @endif" required>
+                           value="@if(Auth::guard()->check() && empty(old('fio'))){!! Auth::guard()->user()->fio !!}@else{{ old('fio') }}@endif" required>
                 </div>
             @endif
             @if(isset($app->rows['tel']))
                 <div class="uk-form-row">
                     <label for="tel" class="uk-form-label">Номер телефона:</label>
                     <input type="tel" name="tel" id="tel" class="uk-width-1-1 uk-form-large"
-                           value="@if(Auth::guard()->check()){!! Auth::guard()->user()->tel !!}@else {{ old('tel') }} @endif" required>
+                           value="@if(Auth::guard()->check()){!! Auth::guard()->user()->tel !!}@else{{ old('tel') }}@endif" required>
                 </div>
             @endif
             @if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount'))
@@ -100,3 +107,17 @@
     <div class="clearfix"></div>
 </form>
 {!! JsValidator::formRequest('Larrock\ComponentCart\Requests\OrderFullRequest', '#form-orderFull') !!}
+
+@push('scripts')
+    <script>
+        $('input[name=without_registry]').change(function(){
+            if($('input[name=without_registry]:checked').val() === 'true'){
+                $('input[name=password]').prop('disabled', true);
+                $('label[for=email]').find('span.text-muted').hide();
+            }else{
+                $('input[name=password]').prop('disabled', false);
+                $('label[for=email]').find('span.text-muted').show();
+            }
+        });
+    </script>
+@endpush

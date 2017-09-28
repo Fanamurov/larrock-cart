@@ -92,12 +92,12 @@
                             @if(isset($app->rows['fio']))
                                 <div class="uk-form-row">
                                     <label class="uk-form-label" for="fio{{ $data->order_id }}">ФИО:</label>
-                                    <input type="text" value="{{ $data->get_user->fio }}" id="fio{{ $data->order_id }}" name="fio" class="uk-width-1-1">
+                                    <input type="text" value="{{ $data->fio }}" id="fio{{ $data->order_id }}" name="fio" class="uk-width-1-1">
                                 </div>
                             @endif
                             <div class="uk-form-row">
                                 <label class="uk-form-label" for="email{{ $data->order_id }}">Email:</label>
-                                <input type="text" value="{{ $data->get_user->email }}" id="email{{ $data->order_id }}" name="email" class="uk-width-1-1">
+                                <input type="text" value="{{ $data->email }}" id="email{{ $data->order_id }}" name="email" class="uk-width-1-1">
                             </div>
                             @if(isset($app->rows['tel']))
                                 <div class="uk-form-row">
