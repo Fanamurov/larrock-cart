@@ -73,27 +73,6 @@ class CartController extends Controller
         return view('larrock::front.cart.table', compact('cart', 'seo', 'discount', 'discount_motivate' , ['cart', 'seo', 'discount', 'discount_motivate']));
     }
 
-    public function sendOrderShort(Request $request)
-    {
-        $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
-
-        /** @noinspection PhpVoidFunctionResultUsedInspection */
-        Mail::send('larrock::emails.orderShort',
-            ['name' => $request->get('name'),
-                'contact' => $request->get('contact'),
-                'comment' => $request->get('comment'),
-                'cart'  =>  Cart::content()],
-            function($message) use ($mails){
-                $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
-                $message->to($mails);
-                $message->subject('Отправлена форма заявки '. array_get($_SERVER, 'HTTP_HOST')
-                );
-            });
-
-        Alert::add('success', 'Заявка успешно отправлена. С Вами свяжется наш менеджер')->flash();
-        return back();
-    }
-
     /**
      * Полный цикл оформления покупки
      * @param Request $request
@@ -103,11 +82,20 @@ class CartController extends Controller
     public function sendOrderFull(Request $request)
     {
         $validator_rules = [
-            'email' => 'required|email',
             'oferta' => 'accepted'
         ];
+
+        if( !$request->has('without_registry')){
+            $validator_rules['email'] = 'required|email';
+        }
+
         $app = LarrockCart::getConfig()->rows;
         $except_rows = ['order_id', 'status_order', 'status_pay'];
+
+        if( !$request->has('without_registry')){
+            $except_rows[] = 'email';
+        }
+
         foreach ($app as $row){
             if(strpos($row->valid, 'required') && !in_array($row->name, $except_rows)){
                 $validator_rules[$row->name] = $row->valid;
@@ -115,7 +103,6 @@ class CartController extends Controller
         }
 
         $validator = Validator::make($request->all(), $validator_rules);
-        //ВАЛИДАЦИЯ КАПТЧИ!
         if($validator->fails()){
             return back()->withErrors($validator)->withInput($request->all());
         }
@@ -124,29 +111,32 @@ class CartController extends Controller
             $discountHelper = new DiscountHelper();
         }
 
-        $user = $this->authAttempt($request);
-        if($user && !isset($user->id)){
-            //Alert::add('error', 'Не удалось авторизоваться на сайте')->flash();
-            return back()->withInput();
-        }
+        if( !$request->has('without_registry')) {
+            $user = $this->authAttempt($request);
+            if ($user && !isset($user->id)) {
+                return back()->withInput();
+            }
 
-        if($update_user = LarrockUsers::getModel()->whereId($user->id)->first()){
-            if(empty($user->fio)){
-                $user->fio = $request->get('fio');
+            if ($update_user = LarrockUsers::getModel()->whereId($user->id)->first()) {
+                if (empty($user->fio)) {
+                    $user->fio = $request->get('fio');
+                }
+                if (empty($user->address)) {
+                    $user->address = $request->get('address');
+                }
+                if (empty($user->tel)) {
+                    $user->tel = $request->get('tel');
+                }
+                //Обновление учетки
+                $update_user->save();
             }
-            if(empty($user->address)){
-                $user->address = $request->get('address');
-            }
-            if(empty($user->tel)){
-                $user->tel = $request->get('tel');
-            }
-            //Обновление учетки
-            $update_user->save();
         }
 
         //Собираем данные для заказа
         $create_order = LarrockCart::getModel();
-        $create_order->user = $user->id;
+        if( !$request->has('without_registry')){
+            $create_order->user = $user->id;
+        }
         $create_order->items = Cart::instance('main')->content();
 
         $create_order->cost = (float)str_replace(',', '', Cart::instance('main')->total());
@@ -202,7 +192,9 @@ class CartController extends Controller
         \Log::info('NEW ORDER #'. $order->order_id .'. Order: '. json_encode($order));
 
         $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
-        $mails[] = $order->email;
+        if( !empty($order->email)){
+            $mails[] = $order->email;
+        }
 
         $subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' успешно оформлен';
         /** @noinspection PhpVoidFunctionResultUsedInspection */
@@ -213,7 +205,9 @@ class CartController extends Controller
                 $message->subject($subject);
             });
 
-        Alert::add('success', 'На Ваш email отправлено письмо с деталями заказа')->flash();
+        if( !empty($order->email)) {
+            Alert::add('success', 'На Ваш email отправлено письмо с деталями заказа')->flash();
+        }
     }
 
     /**
