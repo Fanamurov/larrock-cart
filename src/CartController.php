@@ -2,13 +2,13 @@
 
 namespace Larrock\ComponentCart;
 
-use Alert;
 use App\Http\Controllers\Controller;
 use Auth;
 use Cart;
 use Illuminate\Http\Request;
 use Larrock\ComponentDiscount\Helpers\DiscountHelper;
 use Mail;
+use Session;
 use Validator;
 use Larrock\ComponentCatalog\Facades\LarrockCatalog;
 use Larrock\ComponentUsers\Facades\LarrockUsers;
@@ -24,12 +24,8 @@ class CartController extends Controller
     public function getIndex()
     {
         if(Cart::instance('main')->count() === 0){
-            Alert::add('error', 'Ваша корзина пуста')->flash();
+            Session::push('message.danger', 'Ваша корзина пуста');
             return redirect('/');
-        }
-
-        if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
-            $discountHelper = new DiscountHelper();
         }
 
         $cart = Cart::instance('main')->content();
@@ -44,6 +40,9 @@ class CartController extends Controller
                     }else{
                         return redirect('/cart')->withInput();
                     }
+                }
+                if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
+                    $discountHelper = new DiscountHelper();
                 }*/
                 //Важный момент. Проверяем наличие, только у товаров, где оно указано > 0. Не проверяем товары на заказ
                 /*if((int)$get_tovar->nalichie > 0 && (int)$get_tovar->nalichie < (int)$item->qty){
@@ -58,14 +57,14 @@ class CartController extends Controller
                 Cart::instance('main')->remove($item->rowid);
                 if(Cart::instance('main')->count(TRUE) < 1){
                     return back()->withInput();
-                }else{
-                    return redirect('/cart')->withInput();
                 }
+                return redirect('/cart')->withInput();
             }
         }
         $seo = ['title' => 'Корзина товаров. Оформление заявки'];
 
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
+            $discountHelper = new DiscountHelper();
             $discount = $discountHelper->check();
             $discount_motivate = $discountHelper->motivate_cart_discount(Cart::total());
         }
@@ -89,7 +88,7 @@ class CartController extends Controller
             $validator_rules['email'] = 'required|email';
         }
 
-        $app = LarrockCart::getConfig()->rows;
+        $app = LarrockCart::getRows();
         $except_rows = ['order_id', 'status_order', 'status_pay'];
 
         if( !$request->has('without_registry')){
@@ -113,18 +112,18 @@ class CartController extends Controller
 
         if( !$request->has('without_registry')) {
             $user = $this->authAttempt($request);
-            if ($user && !isset($user->id)) {
+            if($user && !isset($user->id)) {
                 return back()->withInput();
             }
 
-            if ($update_user = LarrockUsers::getModel()->whereId($user->id)->first()) {
-                if (empty($user->fio)) {
+            if($update_user = LarrockUsers::getModel()->whereId($user->id)->first()) {
+                if(empty($user->fio)) {
                     $user->fio = $request->get('fio');
                 }
-                if (empty($user->address)) {
+                if(empty($user->address)) {
                     $user->address = $request->get('address');
                 }
-                if (empty($user->tel)) {
+                if(empty($user->tel)) {
                     $user->tel = $request->get('tel');
                 }
                 //Обновление учетки
@@ -174,11 +173,11 @@ class CartController extends Controller
         if($create_order->save()){
             $this->changeTovarStatus($create_order->items, $create_order->id);
             $this->mailFullOrder($request, $create_order);
-            Alert::add('success', 'Ваш заказ #'. $create_order->order_id .' успешно добавлен')->flash();
+            Session::push('message.success', 'Ваш заказ #'. $create_order->order_id .' успешно добавлен');
             Cart::instance('main')->destroy();
             return redirect()->to('/user/cabinet');
         }
-        Alert::add('error', 'Не удалось оформить заказ')->flash();
+        Session::push('message.danger', 'Не удалось оформить заказ');
         return back()->withInput();
     }
 
@@ -205,8 +204,8 @@ class CartController extends Controller
                 $message->subject($subject);
             });
 
-        if( !empty($order->email)) {
-            Alert::add('success', 'На Ваш email отправлено письмо с деталями заказа')->flash();
+        if( !empty($order->email)){
+            Session::push('message.success', 'На Ваш email отправлено письмо с деталями заказа');
         }
     }
 
@@ -225,16 +224,16 @@ class CartController extends Controller
                 $data->nalichie -= $item->qty; //Остаток товара
                 $data->sales += $item->qty; //Количество продаж
                 if($data->save()){
-                    Alert::add('success', 'Товар для вас зарезервирован')->flash();
+                    Session::push('message.success', 'Товар для вас зарезервирован');
                 }else{
-                    Alert::add('error', 'Не удалось зарезервировать товар под ваш заказ')->flash();
+                    Session::push('message.danger', 'Не удалось зарезервировать товар под ваш заказ');
                 }
             }else{
                 //Товара больше нет в продаже, откатываем заказ
                 $find_order = LarrockCart::getModel()->find($id_order);
                 $find_order->delete();
                 Cart::instance('main')->remove($item->id);
-                Alert::add('error', 'Товара из вашей корзины больше нет в нашем каталоге')->flash();
+                Session::push('message.danger', 'Товара из вашей корзины больше нет в нашем каталоге');
                 return back()->withInput();
             }
         }
@@ -252,7 +251,7 @@ class CartController extends Controller
     {
         if( !$user = Auth::guard()->user()){
             if($request->get('password', '') === ''){
-                Alert::add('error', 'Пароль обязателен для заполнения')->flash();
+                Session::push('message.danger', 'Пароль обязателен для заполнения');
                 return back()->withInput($request->all());
             }
             //Пользователь не авторизован, пробуем авторизовать
@@ -265,11 +264,9 @@ class CartController extends Controller
                 //Зарегистрировали, теперь авторизуем
                 if(Auth::attempt(['email' => $request->get('email'), 'password' => $request->get('password')])){
                     // Authentication passed...
-                    //return redirect()->intended('admin.home');
                     return Auth::guard()->user();
                 }
-                //Зарегистрировали, но не получилось авторизовать
-                Alert::add('error', 'Покупатель '. $request->input('email') .' зарегистрирован, но не авторизован')->flash();
+                Session::push('message.danger', 'Покупатель '. $request->input('email') .' зарегистрирован, но не авторизован');
             }
             return back()->withInput($request->all());
 
@@ -283,12 +280,12 @@ class CartController extends Controller
      *
      * @param Request $request
      *
-     * @return User|\Illuminate\Database\Query\Builder|\Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Database\Query\Builder|\Illuminate\Http\RedirectResponse
      */
     protected function fastRegistry(Request $request)
     {
         if($user = LarrockUsers::getModel()->whereEmail($request->input('email'))->first()){
-            Alert::add('error', 'Неверный пароль. Забыли Ваш пароль? <a target="_blank" href="/password/reset">Восстановление пароля</a>')->flash();
+            Session::push('message.danger', 'Неверный пароль. Забыли Ваш пароль? <a target="_blank" href="/password/reset">Восстановление пароля</a>');
             return back()->withInput($request->all());
         }
 
@@ -311,12 +308,12 @@ class CartController extends Controller
         ]);
 
         if($user = LarrockUsers::getModel()->whereEmail($request->input('email'))->first()){
-            $user->attachRole(3); //role user
-            Alert::add('success', 'Пользователь '. $request->input('email') .' успешно зарегистрирован')->flash();
+            $user->attachRole(3);
+            Session::push('message.success', 'Пользователь '. $request->input('email') .' успешно зарегистрирован');
             $this->mailRegistry($request, $user);
             return $user;
         }
-        Alert::add('error', 'Пользователь '. $request->input('email') .' не был добавлен')->flash();
+        Session::push('message.danger', 'Пользователь '. $request->input('email') .' не был добавлен');
         return back()->withInput($request->all());
     }
 
@@ -333,7 +330,7 @@ class CartController extends Controller
         $mails[] = $user->email;
 
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-        $send = Mail::send('larrock::emails.register', ['data' => $user->toArray()],
+        Mail::send('larrock::emails.register', ['data' => $user->toArray()],
             function($message) use ($mails){
                 $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
                 $message->to($mails);
@@ -341,7 +338,7 @@ class CartController extends Controller
                 );
             });
 
-        Alert::add('success', 'На Ваш email отправлено письмо с регистрационными данными')->flash();
+        Session::push('message.success', 'На Ваш email отправлено письмо с регистрационными данными');
     }
 
     /* https://github.com/Crinsane/LaravelShoppingcart */
@@ -385,9 +382,10 @@ class CartController extends Controller
             }
         }
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-        Cart::instance('main')->add($request->get('id'), $get_tovar->title, $qty, $cost, $options)->associate('\Larrock\ComponentCatalog\Models\Catalog');
+        Cart::instance('main')->add($request->get('id'), $get_tovar->title, $qty, $cost, $options)->associate(LarrockCart::getModelName());
 
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
+            $discountHelper = new DiscountHelper();
             $discounts = $discountHelper->check();
             $total = $discounts['cost_after_discount'];
             $profit = $discounts['profit'];
@@ -396,7 +394,8 @@ class CartController extends Controller
             $profit = 0;
         }
 
-        return response()->json(['status' => 'success', 'message' => 'Товар добавлен в корзину', 'total' => $total, 'total_discount' => $profit, 'count' => Cart::instance('main')->count()]);
+        return response()->json(['status' => 'success', 'message' => 'Товар добавлен в корзину', 'total' => $total,
+            'total_discount' => $profit, 'count' => Cart::instance('main')->count()]);
     }
 
     /**

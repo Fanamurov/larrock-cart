@@ -2,16 +2,15 @@
 
 namespace Larrock\ComponentCart;
 
-use Alert;
 use Breadcrumbs;
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
 use Larrock\Core\Component;
 use Mail;
+use Session;
 use Validator;
 use View;
-use Cart;
 use Larrock\ComponentCart\Facades\LarrockCart;
 use Larrock\ComponentCatalog\Facades\LarrockCatalog;
 use Larrock\ComponentUsers\Facades\LarrockUsers;
@@ -45,12 +44,12 @@ class AdminCartController extends Controller
 	{
 		$add_data = LarrockCart::getModel();
 		$add_data->user_id = $request->user()->id;
-		$add_data->order_id = ModelCart::max('order_id') +1;
+		$add_data->order_id = LarrockCart::getModel()->max('order_id') +1;
 		if($add_data->save()){
-			Alert::add('successAdmin', 'Ошибка. Новый заказ не создан')->flash();
+            Session::push('message.success', 'Ошибка. Новый заказ не создан');
 			return back();
 		}
-        Alert::add('errorAdmin', 'Заказ #'. $add_data->order_id .' создан. Обязательно пересохраните заказ с параметрами!')->flash();
+        Session::push('message.danger', 'Заказ #'. $add_data->order_id .' создан. Обязательно пересохраните заказ с параметрами!');
         return back();
 	}
 
@@ -62,13 +61,13 @@ class AdminCartController extends Controller
 		$order->cost -= $order->items->{$id}->subtotal;
 		$order->items = $items->forget($request->get('id'));
 		if($order->save()){
-			Alert::add('successAdmin', 'Заказ #'. $order->order_id .' изменен')->flash();
+            Session::push('message.success', 'Заказ #'. $order->order_id .' изменен');
 			$this->mailFullOrderChange($request, $order);
 			\Cache::flush();
 			return back();
 		}
 
-		Alert::add('errorAdmin', 'Заказ #'. $order->order_id .' не изменен')->flash();
+        Session::push('message.danger', 'Заказ #'. $order->order_id .' не изменен');
 		return back()->withInput();
 	}
 
@@ -105,12 +104,12 @@ class AdminCartController extends Controller
 			if($need_mailIt){
 				$this->mailFullOrderChange($request, $data, $subject);
 			}
-			Alert::add('successAdmin', 'Заказ #'. $data->order_id .' изменен')->flash();
+            Session::push('message.success', 'Заказ #'. $data->order_id .' изменен');
 			\Cache::flush();
 			return back();
 		}
 
-		Alert::add('errorAdmin', 'Заказ #'. $data->order_id .' не изменен')->flash();
+        Session::push('message.danger', 'Заказ #'. $data->order_id .' не изменен');
 		return back()->withInput();
 	}
 
@@ -129,7 +128,6 @@ class AdminCartController extends Controller
 		$order->cost -= $items->{$id}->subtotal;
 		$items->{$id}->subtotal = $request->get('qty') * $items->{$id}->price;
 
-		//dd($items);
 		$order->items = json_encode($items);
 		$order->cost += $items->{$id}->subtotal;
 
@@ -139,7 +137,7 @@ class AdminCartController extends Controller
 		$tovar->sales -= $request->get('old-qty', 1);
 		$tovar->sales += $items->{$id}->qty;
 		if($tovar->nalichie < 0){
-			Alert::add('errorAdmin', 'Недостаточно товара в наличии для изменения заказа. Не хватает: '. $tovar->nalichie .'шт.')->flash();
+            Session::push('message.danger', 'Недостаточно товара в наличии для изменения заказа. Не хватает: '. $tovar->nalichie .'шт.');
 			return back();
 		}
 
@@ -147,17 +145,17 @@ class AdminCartController extends Controller
 			$this->mailFullOrderChange($request, $order);
 			//Меняем количество товара в остатке и кол-во продаж
 			if($tovar->save()){
-				Alert::add('successAdmin', 'Остатки товара изменены')->flash();
+                Session::push('message.success', 'Остатки товара изменены');
 			}else{
-				Alert::add('errorAdmin', 'Остатки товара не списаны')->flash();
+                Session::push('message.danger', 'Остатки товара не списаны');
 			}
 
-			Alert::add('successAdmin', 'Заказ #'. $order->order_id .' изменен')->flash();
+            Session::push('message.success', 'Заказ #'. $order->order_id .' изменен');
 			\Cache::flush();
 			return back();
 		}
 
-		Alert::add('errorAdmin', 'Заказ #'. $order->order_id .' не изменен')->flash();
+        Session::push('message.danger', 'Заказ #'. $order->order_id .' не изменен');
 		return back()->withInput();
 	}
 
@@ -171,15 +169,15 @@ class AdminCartController extends Controller
 	{
 		$data = LarrockCart::getModel()->find($id);
 		if( !$data){
-            Alert::add('errorAdmin', 'Такого заказа на сайте уже нет')->flash();
+            Session::push('message.danger', 'Такого заказа на сайте уже нет');
             return back();
         }
 		if($data->delete()){
 			$this->mailFullOrderDelete($data);
-			Alert::add('successAdmin', 'Заказ успешно удален')->flash();
+            Session::push('message.success', 'Заказ успешно удален');
 			\Cache::flush();
 		}else{
-			Alert::add('errorAdmin', 'Заказ не удален')->flash();
+            Session::push('message.danger', 'Заказ не удален');
 		}
 		return back();
 	}
@@ -205,7 +203,7 @@ class AdminCartController extends Controller
 			});
 
         \Log::info('ORDER DELETE: #'. $order->order_id .'. Order: '. json_encode($order));
-        Alert::add('successAdmin', 'На email покупателя отправлено письмо с деталями заказа')->flash();
+        Session::push('message.success',  'На email покупателя отправлено письмо с деталями заказа');
 	}
 
 	/**
@@ -232,7 +230,7 @@ class AdminCartController extends Controller
 			});
 
         \Log::info('ORDER CHANGE: #'. $order->order_id .'. Order: '. json_encode($order));
-        Alert::add('successAdmin', 'На email покупателя отправлено письмо с деталями заказа')->flash();
+        Session::push('message.success', 'На email покупателя отправлено письмо с деталями заказа');
 	}
 
 	public function docCheck($id)
