@@ -77,7 +77,11 @@ class CartComponent extends Component
         $count = \Cache::remember('count-data-admin-'. LarrockCart::getName(), 1440, function(){
             return LarrockCart::getModel()->count(['id']);
         });
-        return view('larrock::admin.sectionmenu.types.default', ['count' => $count, 'app' => LarrockCart::getConfig(), 'url' => '/admin/'. LarrockCart::getName()]);
+
+        $count_new = \Cache::remember('count-new-data-admin-'. LarrockCart::getName(), 1440, function(){
+            return LarrockCart::getModel()->whereStatusOrder('Новая')->count(['id']);
+        });
+        return view('larrock::admin.sectionmenu.types.default', ['count' => $count .'/'. $count_new, 'app' => LarrockCart::getConfig(), 'url' => '/admin/'. LarrockCart::getName()]);
     }
 
     public function toDashboard()
