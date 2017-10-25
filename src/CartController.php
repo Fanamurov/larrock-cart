@@ -502,4 +502,22 @@ class CartController extends Controller
     {
         return view('larrock::front.cart.oferta');
     }
+
+    /**
+     * Удаление заказа
+     *
+     * @param $id
+     * @return $this
+     */
+    public function removeOrder($id)
+    {
+        $order = LarrockCart::getModel()->find($id);
+        if($order->delete()){
+            $this->changeTovarStatus($order->items, $id);
+            Session::push('message.danger', 'Заказ успешно отменен');
+        }else{
+            Session::push('message.danger', 'Произошла ошибка во время отмены заказа');
+        }
+        return back()->withInput();
+    }
 }

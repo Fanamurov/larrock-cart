@@ -35,6 +35,9 @@ Route::group(['middleware' => $middlewares], function(){
     Route::get('/cart/oferta', [
         'as' => 'cart.oferta', 'uses' => CartController::class .'@oferta'
     ]);
+    Route::post('/user/removeOrder/{id}', [
+        'as' => 'user.removeOrder', 'uses' => CartController::class .'@removeOrder'
+    ]);
 
     Route::post('/ajax/cartAdd', [
         'as' => 'ajax.cartAdd', 'uses' => CartController::class .'@cartAdd'
