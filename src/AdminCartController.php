@@ -5,7 +5,7 @@ namespace Larrock\ComponentCart;
 use Breadcrumbs;
 use Illuminate\Http\Request;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Routing\Controller;
 use Larrock\Core\Component;
 use Mail;
 use Session;
@@ -17,6 +17,8 @@ use Larrock\ComponentUsers\Facades\LarrockUsers;
 
 class AdminCartController extends Controller
 {
+    protected $config;
+    
 	public function __construct()
 	{
         $this->config = LarrockCart::shareConfig();
