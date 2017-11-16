@@ -138,7 +138,7 @@ class CartController extends Controller
         }
         $create_order->items = Cart::instance('main')->content();
 
-        $create_order->cost = (float)str_replace(',', '', Cart::instance('main')->total());
+        $create_order->cost = (float)str_replace(' ', '', Cart::instance('main')->total());
         $create_order->cost_discount = NULL;
 
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
@@ -194,6 +194,7 @@ class CartController extends Controller
         if( !empty($order->email)){
             $mails[] = $order->email;
         }
+        $mails = array_unique($mails);
 
         $subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' успешно оформлен';
         /** @noinspection PhpVoidFunctionResultUsedInspection */
