@@ -383,7 +383,7 @@ class CartController extends Controller
             }
         }
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-        Cart::instance('main')->add($request->get('id'), $get_tovar->title, $qty, $cost, $options)->associate(LarrockCart::getModelName());
+        Cart::instance('main')->add($request->get('id'), $get_tovar->title, $qty, $cost, $options)->associate(LarrockCatalog::getModelName());
 
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
             $discountHelper = new DiscountHelper();
