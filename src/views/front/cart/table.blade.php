@@ -134,12 +134,13 @@
 
     <div class="uk-grid uk-margin-large-top">
         <div class="uk-width-1-1">
-            @include('larrock::front.modules.forms.orderFull')
+            @include('larrock::front.modules.forms.createOrder')
         </div>
     </div>
 @endsection
 
 @push('scripts')
+    <script type="text/javascript" src="/_assets/bower_components/jquery.spinner/js/jquery.spinner.js"></script>
 <script>
     rebuild_cost();
 </script>

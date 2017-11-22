@@ -2,11 +2,17 @@
 
 namespace Larrock\ComponentCart;
 
-use App\Http\Controllers\Controller;
-use Auth;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Routing\Controller;
 use Cart;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Larrock\ComponentCart\Exceptions\LarrockCartException;
 use Larrock\ComponentDiscount\Helpers\DiscountHelper;
+use Larrock\ComponentUsers\Models\User;
+use Larrock\Core\Component;
 use Mail;
 use Session;
 use Validator;
@@ -16,11 +22,31 @@ use Larrock\ComponentCart\Facades\LarrockCart;
 
 class CartController extends Controller
 {
+    use AuthenticatesUsers, ValidatesRequests;
+
+    /** @var $this Component */
+    protected $config;
+
+    /** @var  bool Используется ли оформление заказа без регистрации */
+    protected $withoutRegistry;
+
+    /** @var  bool|User Данные о пользователе */
+    protected $user;
+
+    /** @var  bool Следить ли за наличием, остатками товаров */
+    protected $protectNalicie;
+
     public function __construct()
     {
-        LarrockCart::shareConfig();
+        $this->config = LarrockCart::shareConfig();
+        $this->protectNalicie = NULL;
     }
 
+    /**
+     * Страница интерфейса корзины
+     *
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|\Illuminate\View\View
+     */
     public function getIndex()
     {
         if(Cart::instance('main')->count() === 0){
@@ -32,30 +58,20 @@ class CartController extends Controller
         foreach($cart as $key => $item){
             //Проверяем наличие товара
             if($get_tovar = LarrockCatalog::getModel()->whereId($item->id)->first()){
-                /*if((int)$get_tovar->nalichie < 1){
-                    Cart::remove($item->rowid);
-                    Alert::add('message', $get_tovar->title .' уже нет в наличии, товар удален из корзины')->flash();
-                    if(Cart::count(TRUE) < 1){
-                        return back()->withInput();
-                    }else{
+                if($this->protectNalicie){
+                    if((int)$get_tovar->nalichie < 1){
+                        Cart::instance('main')->remove($item->rowid);
+                        Session::push('message.danger', 'Товара '. $item->name .' уже нет в наличии, товар удален из корзины');
+                        if(Cart::instance('main')->count() < 1){
+                            return back()->withInput();
+                        }
                         return redirect('/cart')->withInput();
                     }
                 }
-                if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
-                    $discountHelper = new DiscountHelper();
-                }*/
-                //Важный момент. Проверяем наличие, только у товаров, где оно указано > 0. Не проверяем товары на заказ
-                /*if((int)$get_tovar->nalichie > 0 && (int)$get_tovar->nalichie < (int)$item->qty){
-                    $options = $item->options->toArray();
-                    $get_discount = $discountHelper->apply_discountsByTovar($get_tovar);
-                    $cost_discount = $get_discount->cost;
-                    Cart::remove($item->rowid);
-                    Cart::associate('Catalog', 'App\Models')->add($get_tovar->id, $get_tovar->title, $get_tovar->nalichie, $cost_discount, $options);
-                    Alert::add('error', 'Не весь товар в наличии, количество товара откорретировано в меньшу сторону')->flash();
-                }*/
             }else{
+                Session::push('message.danger', 'Товара '. $item->name .' уже нет на нашем сайте, товар удален из корзины');
                 Cart::instance('main')->remove($item->rowid);
-                if(Cart::instance('main')->count(TRUE) < 1){
+                if(Cart::instance('main')->count() < 1){
                     return back()->withInput();
                 }
                 return redirect('/cart')->withInput();
@@ -66,116 +82,179 @@ class CartController extends Controller
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
             $discountHelper = new DiscountHelper();
             $discount = $discountHelper->check();
-            $discount_motivate = $discountHelper->motivate_cart_discount(Cart::total());
+            $discount_motivate = $discountHelper->motivate_cart_discount(Cart::instance('main')->total());
         }
 
         return view('larrock::front.cart.table', compact('cart', 'seo', 'discount', 'discount_motivate' , ['cart', 'seo', 'discount', 'discount_motivate']));
     }
 
     /**
-     * Полный цикл оформления покупки
-     * @param Request $request
+     * Создание заказа, Логин/регистрация пользователя при необходимости
      *
-     * @return CartController|\Illuminate\Http\RedirectResponse
+     * @param Request $request
+     * @return $this|\Illuminate\Http\RedirectResponse
      */
-    public function sendOrderFull(Request $request)
+    public function createOrder(Request $request)
     {
-        $validator_rules = [
-            'oferta' => 'accepted'
-        ];
+        $this->validOrder($request);
 
-        if( !$request->has('without_registry')){
-            $validator_rules['email'] = 'required|email';
+        if($request->has('without_registry')) {
+            $this->withoutRegistry = TRUE;
+        }else{
+            $this->user = $this->guard()->user();
         }
 
-        $app = LarrockCart::getRows();
-        $except_rows = ['order_id', 'status_order', 'status_pay'];
-
-        if( !$request->has('without_registry')){
-            $except_rows[] = 'email';
+        if( !$this->user && !$this->withoutRegistry){
+            $this->user = $this->login($request);
         }
 
-        foreach ($app as $row){
-            if(strpos($row->valid, 'required') && !in_array($row->name, $except_rows)){
-                $validator_rules[$row->name] = $row->valid;
-            }
+        return $this->saveOrder($request);
+    }
+
+    /**
+     * @param Request $request
+     * @return $this|bool
+     */
+    protected function validOrder(Request $request)
+    {
+        $validate_rules = $this->config->getValid();
+
+        if($this->withoutRegistry) {
+            unset($validate_rules['email'], $validate_rules['password']);
         }
 
-        $validator = Validator::make($request->all(), $validator_rules);
+        $validator = Validator::make($request->all(), $validate_rules);
         if($validator->fails()){
             return back()->withErrors($validator)->withInput($request->all());
         }
 
+        return TRUE;
+    }
+
+    /**
+     * The user has been authenticated.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  mixed  $user
+     * @return mixed
+     */
+    protected function authenticated(Request $request, $user)
+    {
+        return $this->guard()->user();
+    }
+
+    /**
+     * Get the failed login response instance.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Contracts\Auth\Authenticatable|\Symfony\Component\HttpFoundation\Response
+     *
+     * @throws ValidationException
+     */
+    protected function sendFailedLoginResponse(Request $request)
+    {
+        //Авторизоваться не получилось, пробуем проверить на ошибку в пароле
+        if(User::getModel()->whereEmail($request->get('email'))->first()){
+            throw ValidationException::withMessages([
+                $this->username() => 'Пароль не верный',
+            ]);
+        }
+
+        if( !$this->withoutRegistry){
+            //Пробуем зарегистрировать
+            $user = $request->all();
+            $user['role'] = 3;
+            Validator::make($user, LarrockUsers::getValid())->validate();
+
+            event(new Registered($user = $this->createUser($request->all())));
+
+            $this->guard()->login($user);
+
+            return $this->guard()->user();
+        }
+
+        return NULL;
+    }
+
+    /**
+     * Create a new user instance after a valid registration.
+     *
+     * @param  array  $data
+     * @return User
+     */
+    protected function createUser(array $data)
+    {
+        $user = [];
+        $rows = LarrockUsers::getRows();
+        foreach ($rows as $key => $value){
+            if(array_key_exists($key, $rows) && array_key_exists($key, $data) && !empty($data[$key])){
+                if($key === 'password'){
+                    $user[$key] = bcrypt($data[$key]);
+                }else{
+                    $user[$key] = $data[$key];
+                }
+            }
+        }
+        $this->mailRegistry($user);
+        return LarrockUsers::getModel()->create($user);
+    }
+
+    /**
+     * Сохранение заказа в БД
+     *
+     * @param Request $request
+     * @return $this|\Illuminate\Http\RedirectResponse
+     */
+    protected function saveOrder(Request $request)
+    {
+        $order = [];
+
+        if( !$this->withoutRegistry){
+            $order['user'] = $this->user->id;
+        }
+        $order['items'] = Cart::instance('main')->content();
+
+        $cartFillableRows = LarrockCart::getFillableRows();
+        foreach ($cartFillableRows as $row){
+            $order[$row] = $request->get($row);
+        }
+
+        $order['cost'] = (float)str_replace(' ', '', Cart::instance('main')->total());
+        $order['cost_discount'] = NULL;
+
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
             $discountHelper = new DiscountHelper();
-        }
-
-        if( !$request->has('without_registry')) {
-            $user = $this->authAttempt($request);
-            if($user && !isset($user->id)) {
-                return back()->withInput();
-            }
-
-            if($update_user = LarrockUsers::getModel()->whereId($user->id)->first()) {
-                if(empty($user->fio)) {
-                    $user->fio = $request->get('fio');
-                }
-                if(empty($user->address)) {
-                    $user->address = $request->get('address');
-                }
-                if(empty($user->tel)) {
-                    $user->tel = $request->get('tel');
-                }
-                //Обновление учетки
-                $update_user->save();
-            }
-        }
-
-        //Собираем данные для заказа
-        $create_order = LarrockCart::getModel();
-        if( !$request->has('without_registry')){
-            $create_order->user = $user->id;
-        }
-        $create_order->items = Cart::instance('main')->content();
-
-        $create_order->cost = (float)str_replace(' ', '', Cart::instance('main')->total());
-        $create_order->cost_discount = NULL;
-
-        if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
             if($discount = $discountHelper->check()){
                 if($discount['profit'] > 0 && $discount['cost_after_discount'] > 0){
-                    $create_order->cost_discount = $discount['cost_after_discount'];
-                    $create_order->discount = $discount;
+                    $order['cost_discount'] = $discount['cost_after_discount'];
+                    $order['discount'] = $discount;
                 }
             }
 
             //Обрабатываем счетчик использования скидок
-            if(isset($create_order->discount->discount)){
-                $discountHelper->discountCountApply($create_order->discount->discount);
+            if(isset($order['discount']->discount)){
+                $discountHelper->discountCountApply($order['discount']->discount);
             }
         }
 
-        $create_order->status_order = 'Обрабатывается';
-        $create_order->status_pay = 'Не оплачено';
-        $create_order->method_delivery = $request->get('delivery-method');
-        $create_order->method_pay = $request->get('pay-method');
-        $create_order->address = $request->get('address');
-        $create_order->tel = $request->get('tel');
-        $create_order->email = $request->get('email');
-        $create_order->fio = $request->get('fio');
-        $create_order->kupon = $request->get('kupon');
-        $create_order->comment = $request->get('comment');
+        $order['status_order'] = 'Обрабатывается';
+        $order['status_pay'] = 'Не оплачено';
+        $order['kupon'] = $request->get('kupon');
         if( !$order_id = LarrockCart::getModel()->max('order_id')){
             $order_id = 1;
         }
-        $create_order->order_id = ++$order_id;
+        $order['order_id'] = ++$order_id;
 
-        if($create_order->save()){
+        if($create_order = LarrockCart::getModel()->create($order)){
             $this->changeTovarStatus($create_order->items, $create_order->id);
-            $this->mailFullOrder($request, $create_order);
+            $this->mailFullOrder($create_order);
             Session::push('message.success', 'Ваш заказ #'. $create_order->order_id .' успешно добавлен');
             Cart::instance('main')->destroy();
-            return redirect()->to('/user/cabinet');
+
+            if( !$this->withoutRegistry){
+                return redirect()->to('/cabinet');
+            }
+            return redirect()->to('/');
         }
         Session::push('message.danger', 'Не удалось оформить заказ');
         return back()->withInput();
@@ -183,10 +262,9 @@ class CartController extends Controller
 
     /**
      * Отправка email'а о новом заказе
-     * @param Request $request
      * @param         $order
      */
-    public function mailFullOrder(Request $request, $order)
+    public function mailFullOrder($order)
     {
         \Log::info('NEW ORDER #'. $order->order_id .'. Order: '. json_encode($order));
 
@@ -242,96 +320,21 @@ class CartController extends Controller
     }
 
     /**
-     * Попытка авторизации
-     *
-     * @param Request $request
-     *
-     * @return \Illuminate\Contracts\Auth\Authenticatable|\Illuminate\Http\RedirectResponse
-     */
-    protected function authAttempt(Request $request)
-    {
-        if( !$user = Auth::guard()->user()){
-            if($request->get('password', '') === ''){
-                Session::push('message.danger', 'Пароль обязателен для заполнения');
-                return back()->withInput($request->all());
-            }
-            //Пользователь не авторизован, пробуем авторизовать
-            if(Auth::attempt(['email' => $request->get('email'), 'password' => $request->get('password')])){
-                return Auth::guard()->user();
-            }
-            //Авторизация не прошла
-            //Пользователь еще не зарегистрирован, регистрируем
-            if($user = $this->fastRegistry($request)){
-                //Зарегистрировали, теперь авторизуем
-                if(Auth::attempt(['email' => $request->get('email'), 'password' => $request->get('password')])){
-                    // Authentication passed...
-                    return Auth::guard()->user();
-                }
-                Session::push('message.danger', 'Покупатель '. $request->input('email') .' зарегистрирован, но не авторизован');
-            }
-            return back()->withInput($request->all());
-
-        }
-        //Пользователь уже зарегистрирован
-        return $user;
-    }
-
-    /**
-     * Тихая регистрация
-     *
-     * @param Request $request
-     *
-     * @return \Illuminate\Database\Query\Builder|\Illuminate\Http\RedirectResponse
-     */
-    protected function fastRegistry(Request $request)
-    {
-        if($user = LarrockUsers::getModel()->whereEmail($request->input('email'))->first()){
-            Session::push('message.danger', 'Неверный пароль. Забыли Ваш пароль? <a target="_blank" href="/password/reset">Восстановление пароля</a>');
-            return back()->withInput($request->all());
-        }
-
-        $validator = Validator::make($request->all(), [
-            'email' => 'required',
-            'password' => 'required',
-        ]);
-        if($validator->fails()){
-            return back()->withInput()->withErrors($validator);
-        }
-
-        LarrockUsers::getModel()->create([
-            'email' => $request->get('email'),
-            'first_name' => $request->get('first_name'),
-            'last_name' => $request->get('last_name'),
-            'tel' => $request->get('tel'),
-            'address' => $request->get('address'),
-            'fio' => $request->get('fio'),
-            'password' => \Hash::make($request->get('password')),
-        ]);
-
-        if($user = LarrockUsers::getModel()->whereEmail($request->input('email'))->first()){
-            $user->attachRole(3);
-            Session::push('message.success', 'Пользователь '. $request->input('email') .' успешно зарегистрирован');
-            $this->mailRegistry($request, $user);
-            return $user;
-        }
-        Session::push('message.danger', 'Пользователь '. $request->input('email') .' не был добавлен');
-        return back()->withInput($request->all());
-    }
-
-    /**
      * Отправка письма о регистрации
-     * @param Request $request
-     * @param User    $user
+     * @param array    $user
      */
-    public function mailRegistry(Request $request, $user)
+    public function mailRegistry($user)
     {
-        \Log::info('NEW USER REGISTRY ID#'. $user->id .' email:'. $user->email);
+        \Log::info('NEW USER REGISTRY ID#'. $user['id'] .' email:'. $user['email']);
 
-        $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
-        $mails[] = $user->email;
+        $mails = [];
+        if(config('larrock.user.sendImailWhenNewRegister', true) === true){
+            $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
+        }
+        $mails[] = $user['email'];
 
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-        Mail::send('larrock::emails.register', ['data' => $user->toArray()],
+        Mail::send('larrock::emails.register', ['data' => $user],
             function($message) use ($mails){
                 $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
                 $message->to($mails);
@@ -342,11 +345,11 @@ class CartController extends Controller
         Session::push('message.success', 'На Ваш email отправлено письмо с регистрационными данными');
     }
 
-    /* https://github.com/Crinsane/LaravelShoppingcart */
     /**
      * Add a row to the cart
      *
      * @param Request $request
+     * @see https://github.com/Crinsane/LaravelShoppingcart
      *
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
      */
@@ -449,8 +452,8 @@ class CartController extends Controller
      * Update the quantity of one row of the cart
      *
      * @param Request $request
-     *
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
+     * @throws LarrockCartException
      */
     public function cartQty(Request $request)
     {
@@ -467,7 +470,7 @@ class CartController extends Controller
             }
             return response()->json(['total' => Cart::instance('main')->total(), 'subtotal' => $subtotal, 'total_discount' => $total_discount]);
         }
-        return abort('500', 'not valid data input');
+        throw LarrockCartException::withMessage('not valid data input');
     }
 
     /**

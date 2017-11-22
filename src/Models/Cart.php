@@ -67,10 +67,9 @@ class Cart extends Model
 
     public function __construct(array $attributes = [])
     {
-        parent::__construct($attributes);
-        $this->fillable(LarrockCart::addFillableUserRows(['order_id', 'items', 'cost', 'cost_discount', 'kupon', 'status_order', 'status_pay',
-		'method_pay', 'method_delivery', 'comment', 'comment_admin', 'address', 'tel', 'email', 'fio', 'pay_at', 'invoiceId', 'discount']));
+        $this->fillable(LarrockCart::getFillableRows());
         $this->table = LarrockCart::getConfig()->table;
+        parent::__construct($attributes);
     }
 
     protected $searchable = [
@@ -89,6 +88,7 @@ class Cart extends Model
 		'cost_discount' => 'float',
         'discount' => 'collection'
 	];
+
 	public function getItemsAttribute($value)
 	{
 		$items = json_decode($value);

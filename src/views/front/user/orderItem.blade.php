@@ -70,7 +70,7 @@
                 @foreach($data->items as $item)
                     <tr>
                         <td class="tovar_image uk-hidden-small">
-                            @if($item->catalog)
+                            @if($item->catalog && $item->catalog->getFirstImage)
                                 <img src="{{ $item->catalog->getFirstImage->getUrl('140x140') }}" alt="{{ $item->name }}" class="all-width">
                             @else
                                 <img src="/_assets/_front/_images/empty_big.png" alt="Not Photo" class="all-width">

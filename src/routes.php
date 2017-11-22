@@ -17,9 +17,8 @@ if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')){
 }
 
 Route::group(['middleware' => $middlewares], function(){
-    Route::get('/cart', [
-        'as' => 'cart.index', 'uses' => CartController::class .'@getIndex'
-    ]);
+    Route::get('/cart', 'Larrock\ComponentCart\CartController@getIndex')->name('cart.index');
+    Route::post('/cart/order', 'Larrock\ComponentCart\CartController@createOrder')->name('cart.create.order');
     Route::post('/cart/short', [
         'as' => 'cart.sendOrder', 'uses' => CartController::class .'@sendOrderShort'
     ]);
@@ -27,11 +26,9 @@ Route::group(['middleware' => $middlewares], function(){
         'as' => 'cart.sendOrderFull', 'uses' => CartController::class .'@sendOrderFull'
     ]);
     Route::get('/cart/success', [
-        'as' => 'cart.success', 'uses' => UserController::class .'@cabinet'
+        'as' => 'cart.success', 'uses' => 'Larrock\ComponentUsers\UsersController@cabinet'
     ]);
-    Route::get('/cart/fail', [
-        'as' => 'cart.fail', 'uses' => UserController::class .'@cabinet'
-    ]);
+    Route::get('/cart/fail','Larrock\ComponentUsers\UsersController@cabinet')->name('cart.fail');
     Route::get('/cart/oferta', [
         'as' => 'cart.oferta', 'uses' => CartController::class .'@oferta'
     ]);

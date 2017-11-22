@@ -3,6 +3,7 @@
 namespace Larrock\ComponentCart\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Larrock\ComponentCart\Facades\LarrockCart;
 
 class OrderFullRequest extends FormRequest
 {
@@ -23,12 +24,6 @@ class OrderFullRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-            'email' => 'required_without:without_registry|email',
-            'tel' => 'required',
-            'address' => 'required',
-            'fio' => 'required',
-            'oferta' => 'accepted'
-        ];
+        return LarrockCart::getValid();
     }
 }
