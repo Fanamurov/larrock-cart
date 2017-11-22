@@ -40,6 +40,7 @@ class CartController extends Controller
     {
         $this->config = LarrockCart::shareConfig();
         $this->protectNalicie = NULL;
+        $this->middleware(LarrockCart::combineFrontMiddlewares());
     }
 
     /**
@@ -195,8 +196,10 @@ class CartController extends Controller
                 }
             }
         }
+        $user = LarrockUsers::getModel()->create($user);
+        $user->attachRole(3);
         $this->mailRegistry($user);
-        return LarrockUsers::getModel()->create($user);
+        return $user;
     }
 
     /**
@@ -325,13 +328,13 @@ class CartController extends Controller
      */
     public function mailRegistry($user)
     {
-        \Log::info('NEW USER REGISTRY ID#'. $user['id'] .' email:'. $user['email']);
+        \Log::info('NEW USER REGISTRY ID#'. $user->id .' email:'. $user->email);
 
         $mails = [];
         if(config('larrock.user.sendImailWhenNewRegister', true) === true){
             $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
         }
-        $mails[] = $user['email'];
+        $mails[] = $user->email;
 
         /** @noinspection PhpVoidFunctionResultUsedInspection */
         Mail::send('larrock::emails.register', ['data' => $user],
