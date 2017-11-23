@@ -52,7 +52,8 @@
             @if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount'))
                 <div class="uk-form-row">
                     <label for="fio" class="uk-form-label">У вас есть скидочный купон?</label>
-                    <input type="text" value="" placeholder="ИМЯ купона" name="kupon" class="uk-width-1-1 uk-form-large">
+                    <input type="text" value="" placeholder="ИМЯ купона" name="kupon" class="uk-width-1-1 uk-form-large" onchange="checkKuponDiscount()">
+                    <div class="kupon_text uk-alert" style="display: none"></div>
                 </div>
             @endif
         </div>

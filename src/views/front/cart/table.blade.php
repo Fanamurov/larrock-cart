@@ -82,23 +82,47 @@
                 </tr>
             @endforeach
             @if(isset($discount) && $discount['profit'] > 0)
-                <tr>
+                <tr class="total-row uk-hidden">
                     <td colspan="6">
                         <p class="uk-text-right row-total uk-text-muted">Сумма: <strong class="total">{!! Cart::instance('main')->total() !!}</strong> руб.</p>
                     </td>
                 </tr>
                 <tr class="discount_row">
                     <td colspan="6">
-                        <p class="uk-text-right row-total">Всего к оплате со скидкой: <strong class="total_discount">{!! $discount['cost_after_discount'] !!}</strong> руб.</p>
-                    @if(array_key_exists('cart', $discount['discount']))
-                            <div class="small uk-text-right"><sup>*</sup>{{ $discount['discount']['cart']->description }}</div>
-                    @endif
-                    @if(array_key_exists('history', $discount['discount']))
-                            <div class="small uk-text-right"><sup>*</sup>{{ $discount['discount']['history']->description }}</div>
-                    @endif
-                    @if(array_key_exists('category', $discount['discount']))
-                        <div class="small uk-text-right"><sup>*</sup>{{ $discount['discount']['category']->description }}</div>
-                    @endif
+                        <p class="uk-text-right row-total">Всего к оплате со скидкой: <strong class="total_discount uk-h1">{!! $discount['cost_after_discount'] !!}</strong> руб.</p>
+                        @if(array_key_exists('cart', $discount['discount']))
+                            <div class="discount-row-text uk-text-right uk-text-success">
+                                {!! $discount['discount']['cart']->description !!} &mdash;
+                                @if((integer)$discount['discount']['cart']->percent > 0)
+                                    {!! $discount['discount']['cart']->percent !!}%
+                                @endif
+                                @if((integer)$discount['discount']['cart']->num > 0)
+                                    {!! $discount['discount']['cart']->num !!} руб.
+                                @endif
+                            </div>
+                        @endif
+                        @if(array_key_exists('history', $discount['discount']))
+                            <div class="discount-row-text uk-text-right uk-text-success">
+                                {!! $discount['discount']['history']->description !!} &mdash;
+                                @if((integer)$discount['discount']['history']->percent > 0)
+                                    {!! $discount['discount']['history']->percent !!}%
+                                @endif
+                                @if((integer)$discount['discount']['history']->num > 0)
+                                    {!! $discount['discount']['history']->num !!} руб.
+                                @endif
+                            </div>
+                        @endif
+                        @if(array_key_exists('category', $discount['discount']))
+                            <div class="discount-row-text uk-text-right uk-text-success">
+                                {!! $discount['discount']['category']->description !!} &mdash;
+                                @if((integer)$discount['discount']['category']->percent > 0)
+                                    {!! $discount['discount']['category']->percent !!}%
+                                @endif
+                                @if((integer)$discount['discount']['category']->num > 0)
+                                    {!! $discount['discount']['category']->num !!} руб.
+                                @endif
+                            </div>
+                        @endif
                     </td>
                 </tr>
             @else
@@ -113,19 +137,37 @@
     </form>
 
     @if(isset($discount) && count($discount_motivate) > 0)
-    <div class="uk-grid">
+    <div class="uk-grid motivate-container">
         <div class="uk-width-1-1">
-            <p class="uk-h4">Накопительные скидки в корзине:</p>
-            <ul>
+            <p class="uk-h2">Накопительные скидки в корзине:</p>
+            <ul class="motivate_list">
             @foreach($discount_motivate as $motivate)
-                <li>
-                    {{ $motivate->description }}
-                    @if($motivate->cost_min < Cart::instance('main')->total())
-                        Применена!
-                    @else
-                        Добавьте в корзину товаров на сумму {!! $motivate->cost_min - Cart::instance('main')->total() !!} рублей
-                    @endif
-                </li>
+                @if($motivate->cost_min < Cart::instance('main')->total())
+                    <li class="uk-text-success">
+                        {!! $motivate->description !!} &mdash; ваша скидка
+                        @if((integer)$motivate->percent > 0)
+                            {!! $motivate->percent !!}%
+                        @endif
+                        @if((integer)$motivate->num > 0)
+                            {!! $motivate->num !!} руб.
+                        @endif
+                    </li>
+                @else
+                    <li>
+                        {!! $motivate->description !!}
+
+                        @if($motivate->cost_min > Cart::instance('main')->total())
+                            Добавьте в корзину товаров на сумму {!! $motivate->cost_min - Cart::instance('main')->total() !!} рублей и получите скидку
+                        @endif
+
+                        @if((integer)$motivate->percent > 0)
+                            {!! $motivate->percent !!}%.
+                        @endif
+                        @if((integer)$motivate->num > 0)
+                            {!! $motivate->num !!} руб.
+                        @endif
+                    </li>
+                @endif
             @endforeach
             </ul>
         </div>
