@@ -36,6 +36,8 @@ class CreateCartTable extends Migration {
 			$table->dateTime('pay_at')->nullable();
 			$table->integer('invoiceId')->nullable();
 			$table->timestamps();
+
+            $table->index(['user']);
 		});
 	}
 

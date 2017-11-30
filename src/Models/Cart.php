@@ -5,6 +5,7 @@ namespace Larrock\ComponentCart\Models;
 use Illuminate\Database\Eloquent\Model;
 use Larrock\ComponentCatalog\Facades\LarrockCatalog;
 use Larrock\ComponentUsers\Facades\LarrockUsers;
+use Larrock\Core\Traits\GetLink;
 use Nicolaslopezj\Searchable\SearchableTrait;
 use Larrock\ComponentCart\Facades\LarrockCart;
 
@@ -64,11 +65,13 @@ use Larrock\ComponentCart\Facades\LarrockCart;
 class Cart extends Model
 {
     use SearchableTrait;
+    use GetLink;
 
     public function __construct(array $attributes = [])
     {
-        $this->fillable(LarrockCart::getFillableRows());
-        $this->table = LarrockCart::getConfig()->table;
+        $this->fillable(LarrockCart::addFillableUserRows([]));
+        $this->table = LarrockCart::getTable();
+        $this->config = LarrockCart::getConfig();
         parent::__construct($attributes);
     }
 
