@@ -11,7 +11,7 @@ Route::post('/ajax/cartRemove', 'Larrock\ComponentCart\CartController@cartRemove
 Route::post('/ajax/cartQty', 'Larrock\ComponentCart\CartController@cartQty')->name('cart.qty');
 Route::any('/ajax/getTovar', 'Larrock\ComponentCatalog\CatalogController@getTovar')->name('catalog.get.tovar');
 
-Route::group(['prefix' => 'admin', 'middleware'=> ['web', 'level:2', 'LarrockAdminMenu', 'SaveAdminPluginsData', 'SiteSearchAdmin']], function(){
+Route::group(['prefix' => 'admin'], function(){
     Route::delete('/cart/removeItem', 'Larrock\ComponentCart\AdminCartController@removeItem')->name('cart.removeItem');
     Route::resource('cart', 'Larrock\ComponentCart\AdminCartController', ['names' => [
         'index' => 'admin.cart.index',
@@ -20,4 +20,8 @@ Route::group(['prefix' => 'admin', 'middleware'=> ['web', 'level:2', 'LarrockAdm
     Route::put('/cart/qtyItem/{id}', 'Larrock\ComponentCart\AdminCartController@editQtyItem')->name('cart.editQtyItem');
     Route::get('/cart/check/{id}', 'Larrock\ComponentCart\AdminCartController@docCheck')->name('cart.check');
     Route::get('/cart/delivery/{id}', 'Larrock\ComponentCart\AdminCartController@docDelivery')->name('cart.delivery');
+});
+
+Breadcrumbs::register('admin.'. LarrockCart::getName() .'.index', function($breadcrumbs){
+    $breadcrumbs->push(LarrockCart::getTitle(), '/admin/'. LarrockCart::getName());
 });

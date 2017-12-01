@@ -2,9 +2,7 @@
 
 namespace Larrock\ComponentCart;
 
-use Breadcrumbs;
 use Illuminate\Http\Request;
-
 use Illuminate\Routing\Controller;
 use Larrock\Core\Component;
 use Mail;
@@ -21,12 +19,9 @@ class AdminCartController extends Controller
     
 	public function __construct()
 	{
+        $this->middleware(LarrockCart::combineAdminMiddlewares());
         $this->config = LarrockCart::shareConfig();
-
         \Config::set('breadcrumbs.view', 'larrock::admin.breadcrumb.breadcrumb');
-        Breadcrumbs::register('admin.'. LarrockCart::getName() .'.index', function($breadcrumbs){
-            $breadcrumbs->push(LarrockCart::getTitle(), '/admin/'. LarrockCart::getName());
-        });
 	}
 
 	/**
