@@ -56,7 +56,7 @@ class CartController extends Controller
         }
 
         $cart = Cart::instance('main')->content();
-        foreach($cart as $key => $item){
+        /*foreach($cart as $key => $item){
             //Проверяем наличие товара
             if($get_tovar = LarrockCatalog::getModel()->whereId($item->id)->first()){
                 if($this->protectNalicie){
@@ -77,7 +77,7 @@ class CartController extends Controller
                 }
                 return redirect('/cart')->withInput();
             }
-        }
+        }*/
         $seo = ['title' => 'Корзина товаров. Оформление заявки'];
 
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
@@ -86,7 +86,7 @@ class CartController extends Controller
             $discount_motivate = $discountHelper->motivate_cart_discount(Cart::instance('main')->total());
         }
 
-        return view('larrock::front.cart.table', compact('cart', 'seo', 'discount', 'discount_motivate' , ['cart', 'seo', 'discount', 'discount_motivate']));
+        return view(config('larrock.views.cart.getIndex', 'larrock::front.cart.table'), compact('cart', 'seo', 'discount', 'discount_motivate' , ['cart', 'seo', 'discount', 'discount_motivate']));
     }
 
     /**
@@ -212,17 +212,17 @@ class CartController extends Controller
     {
         $order = [];
 
+        $cartFillableRows = LarrockCart::getFillableRows();
+        foreach ($cartFillableRows as $key => $row){
+            $order[$row] = $request->get($row);
+        }
+
         if( !$this->withoutRegistry){
             $order['user'] = $this->user->id;
         }
         $order['items'] = Cart::instance('main')->content();
 
-        $cartFillableRows = LarrockCart::getFillableRows();
-        foreach ($cartFillableRows as $row){
-            $order[$row] = $request->get($row);
-        }
-
-        $order['cost'] = (float)str_replace(' ', '', Cart::instance('main')->total());
+        $order['cost'] = (float)str_replace(',', '', Cart::instance('main')->total());
         $order['cost_discount'] = NULL;
 
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
@@ -248,8 +248,7 @@ class CartController extends Controller
         }
         $order['order_id'] = ++$order_id;
 
-        if($create_order = LarrockCart::getModel()->create($order)){
-            $this->changeTovarStatus($create_order->items, $create_order->id);
+        if($this->changeTovarStatus($order['items']) && $create_order = LarrockCart::getModel()->create($order)){
             $this->mailFullOrder($create_order);
             Session::push('message.success', 'Ваш заказ #'. $create_order->order_id .' успешно добавлен');
             Cart::instance('main')->destroy();
@@ -279,7 +278,8 @@ class CartController extends Controller
 
         $subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' успешно оформлен';
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-        Mail::send('larrock::emails.orderFull', ['data' => $order->toArray(), 'subject' => $subject],
+        Mail::send(config('larrock.views.cart.emailOrderFull', 'larrock::emails.orderFull'),
+            ['data' => $order->toArray(), 'subject' => $subject],
             function($message) use ($mails, $subject){
                 $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
                 $message->to($mails);
@@ -292,17 +292,18 @@ class CartController extends Controller
     }
 
     /**
+     * Проверяем наличие товара
      * Меняем количество товара в наличии
      *
      * @param $cart
-     * @param $id_order
      *
-     * @return bool|\Illuminate\Http\RedirectResponse|CartController
+     * @return bool
      */
-    protected function changeTovarStatus($cart, $id_order)
+    protected function changeTovarStatus($cart)
     {
+        $ok = TRUE;
         foreach($cart as $item){
-            if($data = LarrockCatalog::getModel()->find($item->id)){
+            if($data = LarrockCatalog::getModel()->whereId($item->id)->first()){
                 $data->nalichie -= $item->qty; //Остаток товара
                 $data->sales += $item->qty; //Количество продаж
                 if($data->save()){
@@ -312,14 +313,14 @@ class CartController extends Controller
                 }
             }else{
                 //Товара больше нет в продаже, откатываем заказ
-                $find_order = LarrockCart::getModel()->find($id_order);
-                $find_order->delete();
-                Cart::instance('main')->remove($item->id);
-                Session::push('message.danger', 'Товара из вашей корзины больше нет в нашем каталоге');
-                return back()->withInput();
+                $ok = NULL;
+                Cart::instance('main')->remove($item->rowId);
+                Session::push('message.danger', 'Товара '. $item->name .' из вашей корзины больше нет в нашем каталоге');
+                Session::push('message.danger', 'Мы обновили вашу корзину удалив '. $item->name);
+
             }
         }
-        return TRUE;
+        return $ok;
     }
 
     /**
@@ -507,7 +508,7 @@ class CartController extends Controller
      */
     public function oferta()
     {
-        return view('larrock::front.cart.oferta');
+        return view(config('larrock.views.cart.oferta', 'larrock::front.cart.oferta'));
     }
 
     /**
@@ -520,7 +521,7 @@ class CartController extends Controller
     {
         $order = LarrockCart::getModel()->find($id);
         if($order->delete()){
-            $this->changeTovarStatus($order->items, $id);
+            $this->changeTovarStatus($order->items);
             Session::push('message.danger', 'Заказ успешно отменен');
         }else{
             Session::push('message.danger', 'Произошла ошибка во время отмены заказа');
