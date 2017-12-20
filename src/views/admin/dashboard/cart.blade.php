@@ -21,7 +21,7 @@
                         <span data-uk-tooltip title="Статус оплаты">{{ $value->status_pay }}</span>
                     </td>
                     <td>{{ $value->fio or 'n/a' }}</td>
-                    <td>
+                    <td class="uk-hidden-small">
                         <span data-uk-tooltip title="Дата создания заказа">{{ \Carbon\Carbon::parse($value->created_at)->format('d/m/Y') }}</span><br/>
                         <span data-uk-tooltip title="Дата обновления заказа">{{ \Carbon\Carbon::parse($value->updated_at)->format('d/m/Y') }}</span>
                     </td>

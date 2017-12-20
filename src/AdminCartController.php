@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller;
 use Larrock\Core\Component;
 use Mail;
 use Session;
+use Spatie\MediaLibrary\Media;
 use Validator;
 use View;
 use Larrock\ComponentCart\Facades\LarrockCart;
@@ -55,14 +56,18 @@ class AdminCartController extends Controller
 		$id = $request->get('id');
 		$order = LarrockCart::getModel()->whereOrderId($request->get('order_id'))->firstOrFail();
 		$items = collect($order->items);
-		$order->cost -= $order->items->{$id}->subtotal;
-		$order->items = $items->forget($request->get('id'));
-		if($order->save()){
-            Session::push('message.success', 'Заказ #'. $order->order_id .' изменен');
-			$this->mailFullOrderChange($request, $order);
-			\Cache::flush();
-			return back();
-		}
+		if(isset($order->items->{$id})){
+            $order->cost -= $order->items->{$id}->subtotal;
+            $order->items = $items->forget($request->get('id'));
+            if($order->save()){
+                Session::push('message.success', 'Заказ #'. $order->order_id .' изменен');
+                $this->mailFullOrderChange($request, $order);
+                \Cache::flush();
+                return back();
+            }
+        }else{
+            Session::push('message.danger', 'Товар уже удален из заказа');
+        }
 
         Session::push('message.danger', 'Заказ #'. $order->order_id .' не изменен');
 		return back()->withInput();
@@ -109,6 +114,49 @@ class AdminCartController extends Controller
         Session::push('message.danger', 'Заказ #'. $data->order_id .' не изменен');
 		return back()->withInput();
 	}
+
+    /**
+     * Добавление товара к заказу
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+	public function store(Request $request)
+    {
+        $id = $request->get('id');
+        $qty = $request->get('kolvo');
+        if( !$order = LarrockCart::getModel()->whereOrderId($request->get('order_id'))->first()){
+            Session::push('message.danger', 'Такого товара на сайте нет');
+            return back();
+        }
+
+        $items = $order->items;
+        $tovar = \LarrockCatalog::getModel()->whereId($id)->firstOrFail();
+
+        $options = [];
+        foreach ($request->except(['id', 'kolvo', 'order_id', '_token']) as $key => $option){
+            $options[$key] = $option;
+        }
+
+        \Cart::instance('temp')->add(str_slug($tovar->title), $tovar->title, $qty, $tovar->cost, $options)->associate(\LarrockCatalog::getModelName());
+        $cart = \Cart::instance('temp')->content();
+
+        foreach ($items as $item){
+            $cart->put($item->rowId, $item);
+            $order->cost += $item->qty * $item->price;
+        }
+
+        \Cart::instance('temp')->destroy();
+        $order->items = $cart;
+
+        if($order->save()){
+            $this->mailFullOrderChange($request, $order);
+            Session::push('message.success', 'Товар '. $tovar->title .' успешно добавлен к заказу');
+        }else{
+            Session::push('message.danger', 'Добавить товар к заказу не удалось');
+        }
+
+        return back();
+    }
 
 	/**
 	 * Изменение количества товара в заказе

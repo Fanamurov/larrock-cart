@@ -67,7 +67,7 @@
                             </div>
                             <br/>
                             <div class="pull-right modal-buttons">
-                                <input type="hidden" name="order_id" value="{{ $order->id }}">
+                                <input type="hidden" name="order_id" value="{{ $order->order_id }}">
                                 <input type="hidden" name="id" value="{{ $data->id }}">
                                 {{ csrf_field() }}
                                 <button type="submit" class="uk-button uk-button-primary uk-button-large submit_to_cart" data-id="{{ $data->id }}" data-link="/cart">Добавить к заказу</button>

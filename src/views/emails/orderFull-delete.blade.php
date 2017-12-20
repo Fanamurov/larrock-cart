@@ -62,7 +62,9 @@
                             <img style="width: 75px" src="{{ env('APP_URL') }}{!! $item->catalog->getFirstImage->getUrl('140x140') !!}">
                         </a>
                     @else
-                        <img style="width: 75px" src="{{ env('APP_URL') }}{!! $item->catalog->getFirstImage->getUrl('140x140') !!}">
+                        @if(isset($item->catalog->getFirstImage))
+                            <img style="width: 75px" src="{{ env('APP_URL') }}{!! $item->catalog->getFirstImage->getUrl('140x140') !!}">
+                        @endif
                     @endif
                 </td>
                 @if(config('larrock.catalog.ShowItemPage') === true && isset($item->catalog->full_url))
