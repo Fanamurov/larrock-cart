@@ -5,6 +5,7 @@ namespace Larrock\ComponentCart;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Larrock\Core\Component;
+use Larrock\Core\Traits\ShareMethods;
 use Mail;
 use Session;
 use Spatie\MediaLibrary\Media;
@@ -16,10 +17,13 @@ use Larrock\ComponentUsers\Facades\LarrockUsers;
 
 class AdminCartController extends Controller
 {
+    use ShareMethods;
+
     protected $config;
     
 	public function __construct()
 	{
+	    $this->shareMethods();
         $this->middleware(LarrockCart::combineAdminMiddlewares());
         $this->config = LarrockCart::shareConfig();
         \Config::set('breadcrumbs.view', 'larrock::admin.breadcrumb.breadcrumb');
