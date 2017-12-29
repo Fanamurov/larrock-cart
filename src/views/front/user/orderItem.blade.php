@@ -16,7 +16,7 @@
                                 <span class="uk-align-left">К оплате по договорной цене</span>
                             @endif
                         @endif
-                        @if(isset($app->rows['method_pay']))
+                        @if(isset($config_cart->rows['method_pay']))
                             @if($data->method_pay !== 'наличными')
                                 @if(View::exists('larrock::front.yandexkassa.form') && config('yandex_kassa.sc_id'))
                                     @include('larrock::front.yandexkassa.form')
@@ -32,10 +32,10 @@
                     @endif
                 </div>
                 <div class="uk-clearfix"></div>
-                @if(isset($app->rows['method_pay']))
+                @if(isset($config_cart->rows['method_pay']))
                     <p class="uk-text-muted">Метод оплаты: {{ $data->method_pay }}</p>
                 @endif
-                @if(isset($app->rows['method_delivery']))
+                @if(isset($config_cart->rows['method_delivery']))
                     <p class="uk-text-muted">Метод доставки: {{ $data->method_delivery }}</p>
                 @endif
                 <p class="uk-text-muted">
@@ -70,10 +70,16 @@
                 @foreach($data->items as $item)
                     <tr>
                         <td class="tovar_image uk-hidden-small">
-                            @if($item->catalog && $item->catalog->getFirstImage)
-                                <img src="{{ $item->catalog->getFirstImage->getUrl('140x140') }}" alt="{{ $item->name }}" class="all-width">
+                            @if(isset($item->options->cropped))
+                                <a href="{{ $item->options->full }}" data-fancybox="">
+                                    <img src="{{ $item->options->cropped }}" alt="{{ $item->name }}" class="all-width">
+                                </a>
                             @else
-                                <img src="/_assets/_front/_images/empty_big.png" alt="Not Photo" class="all-width">
+                                @if($item->catalog && $item->catalog->getFirstImage)
+                                    <img src="{{ $item->catalog->getFirstImage->getUrl('140x140') }}" alt="{{ $item->name }}" class="all-width">
+                                @else
+                                    <img src="/_assets/_front/_images/empty_big.png" alt="Not Photo" class="all-width">
+                                @endif
                             @endif
                         </td>
                         <td class="description-row">
@@ -88,6 +94,22 @@
                                         <p><span class="uk-text-muted">{{ $config_row['title'] }}:</span> {{ $item->catalog->{$row_key} }}</p>
                                     @endif
                                 @endforeach
+
+                                @if(isset($item->options->typePaper))
+                                    <p class="uk-text-small">Фото {{ $item->options->typePrint }}, {{ $item->options->typePaper }} бумага</p>
+                                @endif
+
+                                @if(isset($item->options->glass))
+                                    <p class="uk-text-small">Рама {{ $item->options->image_h }}x{{ $item->options->image_w }} см,
+                                        {{ $item->options->glass }}, <br/>основание: {{ $item->options->osnovanie }},
+                                        натяг: {{ $item->options->natyag }}, <br/>вставка в раму: {{ $item->options->vramu }}</p>
+                                @endif
+                                @if(isset($row->options->color))
+                                    <p class="uk-text-small">Цвет: {{ $row->options->color }}</p>
+                                @endif
+                                @if(isset($row->options->size))
+                                    <p class="uk-text-small">Размер: {{ $row->options->size }}</p>
+                                @endif
                             </div>
                         </td>
                         <td>
@@ -129,3 +151,12 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+    @if($data->uploaded === 0)
+        <script src="/_assets/_front/_js/dropbox.js"></script>
+        <script>
+            uploadToDropBox({{ $data->order_id }})
+        </script>
+    @endif
+@endpush
