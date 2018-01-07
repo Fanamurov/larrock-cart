@@ -57,16 +57,16 @@
         @foreach($data['items'] as $item)
             <tr>
                 <td width="75px" style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;width: 75px">
-                    @if(config('larrock.catalog.ShowItemPage') === true && isset($item->model->full_url))
-                        <a href="{!! $item->model->full_url !!}">
-                            <img style="width: 75px" src="{{ env('APP_URL') }}{!! $item->model->getFirstImage->getUrl('140x140') !!}">
+                    @if(config('larrock.catalog.ShowItemPage') === true && isset($item->catalog->full_url))
+                        <a href="{!! $item->catalog->full_url !!}">
+                            <img style="width: 75px" src="{{ env('APP_URL') }}{!! $item->catalog->getFirstImage->getUrl('140x140') !!}">
                         </a>
                     @else
-                        <img style="width: 75px" src="{{ env('APP_URL') }}{!! $item->model->getFirstImage->getUrl('140x140') !!}">
+                        <img style="width: 75px" src="{{ env('APP_URL') }}{!! $item->catalog->getFirstImage->getUrl('140x140') !!}">
                     @endif
                 </td>
-                @if(config('larrock.catalog.ShowItemPage') === true && isset($item->model->full_url))
-                    <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;"><a href="{{ env('APP_URL') }}{{ $item->model->full_url }}">{{ $item->name }}</a></td>
+                @if(config('larrock.catalog.ShowItemPage') === true && isset($item->catalog->full_url))
+                    <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;"><a href="{{ env('APP_URL') }}{{ $item->catalog->full_url }}">{{ $item->name }}</a></td>
                 @else
                     <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;">{{ $item->name }}</td>
                 @endif
