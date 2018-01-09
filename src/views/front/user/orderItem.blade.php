@@ -19,7 +19,7 @@
                         @if(isset($config_cart->rows['method_pay']))
                             @if($data->method_pay !== 'наличными')
                                 @if(file_exists(base_path(). '/vendor/fanamurov/larrock-yandex-kassa') && config('larrock-yandex-kassa.sc_id'))
-                                    @include('larrock::front.yandexkassa.form')
+                                    @include('larrock::front.modules.yandexkassa.form-cart')
                                 @else
                                     Метод оплаты не подключен
                                 @endif

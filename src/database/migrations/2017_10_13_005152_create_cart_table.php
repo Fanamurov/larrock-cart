@@ -35,6 +35,7 @@ class CreateCartTable extends Migration {
 			$table->integer('position')->default(0);
 			$table->dateTime('pay_at')->nullable();
 			$table->integer('invoiceId')->nullable();
+			$table->text('payment_data')->nullable();
 			$table->timestamps();
 
             $table->index(['user']);
@@ -51,5 +52,4 @@ class CreateCartTable extends Migration {
 	{
 		Schema::dropIfExists('cart');
 	}
-
 }
