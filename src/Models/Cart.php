@@ -8,6 +8,7 @@ use Larrock\ComponentUsers\Facades\LarrockUsers;
 use Larrock\Core\Traits\GetLink;
 use Nicolaslopezj\Searchable\SearchableTrait;
 use Larrock\ComponentCart\Facades\LarrockCart;
+use Larrock\Core\Component;
 
 /**
  * App\Models\Cart
@@ -64,6 +65,11 @@ use Larrock\ComponentCart\Facades\LarrockCart;
  */
 class Cart extends Model
 {
+    /**
+     * @var $this Component
+     */
+    protected $config;
+    
     use SearchableTrait;
     use GetLink;
 

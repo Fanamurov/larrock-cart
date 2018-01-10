@@ -34,7 +34,7 @@ class CreateCartTable extends Migration {
 			$table->text('comment_admin')->nullable();
 			$table->integer('position')->default(0);
 			$table->dateTime('pay_at')->nullable();
-			$table->integer('invoiceId')->nullable();
+			$table->char('invoiceId')->nullable();
 			$table->text('payment_data')->nullable();
 			$table->timestamps();
 

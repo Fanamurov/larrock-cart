@@ -18,10 +18,10 @@
                         @endif
                         @if(isset($config_cart->rows['method_pay']))
                             @if($data->method_pay !== 'наличными')
-                                @if(file_exists(base_path(). '/vendor/fanamurov/larrock-yandex-kassa') && config('larrock-yandex-kassa.sc_id'))
+                                @if(file_exists(base_path(). '/vendor/fanamurov/larrock-yandex-kassa') && config('larrock-yandex-kassa.shop_id'))
                                     @include('larrock::front.modules.yandexkassa.form-cart')
                                 @else
-                                    Метод оплаты не подключен
+                                    <p class="uk-alert uk-alert-danger uk-display-block">Метод оплаты не подключен</p>
                                 @endif
                             @else
                                 <span class="not-pay">{{ $data->status_pay }}</span>
@@ -70,16 +70,10 @@
                 @foreach($data->items as $item)
                     <tr>
                         <td class="tovar_image uk-hidden-small">
-                            @if(isset($item->options->cropped))
-                                <a href="{{ $item->options->full }}" data-fancybox="">
-                                    <img src="{{ $item->options->cropped }}" alt="{{ $item->name }}" class="all-width">
-                                </a>
+                            @if($item->catalog && $item->catalog->getFirstImage)
+                                <img src="{{ $item->catalog->getFirstImage->getUrl('140x140') }}" alt="{{ $item->name }}" class="all-width">
                             @else
-                                @if($item->catalog && $item->catalog->getFirstImage)
-                                    <img src="{{ $item->catalog->getFirstImage->getUrl('140x140') }}" alt="{{ $item->name }}" class="all-width">
-                                @else
-                                    <img src="/_assets/_front/_images/empty_big.png" alt="Not Photo" class="all-width">
-                                @endif
+                                <img src="/_assets/_front/_images/empty_big.png" alt="Not Photo" class="all-width">
                             @endif
                         </td>
                         <td class="description-row">
@@ -94,22 +88,6 @@
                                         <p><span class="uk-text-muted">{{ $config_row['title'] }}:</span> {{ $item->catalog->{$row_key} }}</p>
                                     @endif
                                 @endforeach
-
-                                @if(isset($item->options->typePaper))
-                                    <p class="uk-text-small">Фото {{ $item->options->typePrint }}, {{ $item->options->typePaper }} бумага</p>
-                                @endif
-
-                                @if(isset($item->options->glass))
-                                    <p class="uk-text-small">Рама {{ $item->options->image_h }}x{{ $item->options->image_w }} см,
-                                        {{ $item->options->glass }}, <br/>основание: {{ $item->options->osnovanie }},
-                                        натяг: {{ $item->options->natyag }}, <br/>вставка в раму: {{ $item->options->vramu }}</p>
-                                @endif
-                                @if(isset($row->options->color))
-                                    <p class="uk-text-small">Цвет: {{ $row->options->color }}</p>
-                                @endif
-                                @if(isset($row->options->size))
-                                    <p class="uk-text-small">Размер: {{ $row->options->size }}</p>
-                                @endif
                             </div>
                         </td>
                         <td>
@@ -151,12 +129,3 @@
         </div>
     </div>
 </div>
-
-@push('scripts')
-    @if($data->uploaded === 0)
-        <script src="/_assets/_front/_js/dropbox.js"></script>
-        <script>
-            uploadToDropBox({{ $data->order_id }})
-        </script>
-    @endif
-@endpush
