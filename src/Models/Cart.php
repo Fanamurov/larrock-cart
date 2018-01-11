@@ -115,6 +115,11 @@ class Cart extends Model
         return [];
 	}
 
+    public function getPaymentDataAttribute($value)
+    {
+        return json_decode($value);
+    }
+
 	public function get_user()
 	{
 		return $this->hasOne(LarrockUsers::getModelName(), 'id', 'user');
