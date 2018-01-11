@@ -98,6 +98,11 @@ class Cart extends Model
         'discount' => 'collection'
 	];
 
+    public function getConfig()
+    {
+        return $this->config;
+    }
+
 	public function getItemsAttribute($value)
 	{
 		$items = json_decode($value);
