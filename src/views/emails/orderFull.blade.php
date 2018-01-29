@@ -57,40 +57,50 @@
         @foreach($data['items'] as $item)
             <tr>
                 <td width="75px" style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;width: 75px">
-                    @if(config('larrock.catalog.ShowItemPage') === true && isset($item->catalog->full_url))
-                        <a href="{!! $item->catalog->full_url !!}">
+                    @if(isset($item->catalog->getFirstImage))
+                        @if(config('larrock.catalog.ShowItemPage') === true && isset($item->catalog->full_url))
+                            <a href="{!! $item->catalog->full_url !!}">
+                                <img style="width: 75px" src="{{ env('APP_URL') }}{!! $item->catalog->getFirstImage->getUrl('140x140') !!}">
+                            </a>
+                        @else
                             <img style="width: 75px" src="{{ env('APP_URL') }}{!! $item->catalog->getFirstImage->getUrl('140x140') !!}">
-                        </a>
-                    @else
-                        <img style="width: 75px" src="{{ env('APP_URL') }}{!! $item->catalog->getFirstImage->getUrl('140x140') !!}">
+                        @endif
                     @endif
                 </td>
                 @if(config('larrock.catalog.ShowItemPage') === true && isset($item->catalog->full_url))
                     <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;">
                         <a href="{{ env('APP_URL') }}{{ $item->catalog->full_url }}">{{ $item->name }}</a>
                         @foreach($item->options as $key_option => $option)
-                            <p class="{{$key_option}}-param">
-                                @if(array_key_exists('className', $option))
-                                    <span class="uk-form-label">@lang('larrock::fields.'.$option['className']):</span>
-                                @else
-                                    <span class="uk-form-label">@lang('larrock::fields.'.$key_option):</span>
-                                @endif
-                                {{ $option['title'] }}
-                            </p>
+                            @if( !is_object($option))
+                                <p><span class="uk-text-muted">@lang('larrock::fields.'.$key_option):</span> {{ $option }}</p>
+                            @else
+                                <p class="{{$key_option}}-param">
+                                    @if(array_key_exists('className', $option))
+                                        <span class="uk-form-label">@lang('larrock::fields.'.$option['className']):</span>
+                                    @else
+                                        <span class="uk-form-label">@lang('larrock::fields.'.$key_option):</span>
+                                    @endif
+                                    {{ $option['title'] }}
+                                </p>
+                            @endif
                         @endforeach
                     </td>
                 @else
                     <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;">
                         {{ $item->name }}
                         @foreach($item->options as $key_option => $option)
-                            <p class="{{$key_option}}-param">
-                                @if(array_key_exists('className', $option))
-                                    <span class="uk-form-label">@lang('larrock::fields.'.$option['className']):</span>
-                                @else
-                                    <span class="uk-form-label">@lang('larrock::fields.'.$key_option):</span>
-                                @endif
-                                {{ $option['title'] }}
-                            </p>
+                            @if( !is_object($option))
+                                <p><span class="uk-text-muted">@lang('larrock::fields.'.$key_option):</span> {{ $option }}</p>
+                            @else
+                                <p class="{{$key_option}}-param">
+                                    @if(array_key_exists('className', $option))
+                                        <span class="uk-form-label">@lang('larrock::fields.'.$option->className):</span>
+                                    @else
+                                        <span class="uk-form-label">@lang('larrock::fields.'.$key_option):</span>
+                                    @endif
+                                    {{ $option->title }}
+                                </p>
+                            @endif
                         @endforeach
                     </td>
                 @endif

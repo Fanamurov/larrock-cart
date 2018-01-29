@@ -88,6 +88,20 @@
                                         <p><span class="uk-text-muted">{{ $config_row['title'] }}:</span> {{ $item->catalog->{$row_key} }}</p>
                                     @endif
                                 @endforeach
+                                @foreach($item->options as $key_option => $option)
+                                    @if( !is_object($option))
+                                        <p><span class="uk-text-muted">@lang('larrock::fields.'.$key_option):</span> {{ $option }}</p>
+                                    @else
+                                        <p class="{{$key_option}}-param">
+                                            @if(array_key_exists('className', $option))
+                                                <span class="uk-form-label">@lang('larrock::fields.'.$option->className):</span>
+                                            @else
+                                                <span class="uk-form-label">@lang('larrock::fields.'.$key_option):</span>
+                                            @endif
+                                            {{ $option->title }}
+                                        </p>
+                                    @endif
+                                @endforeach
                             </div>
                         </td>
                         <td>

@@ -26,8 +26,16 @@
                     <p style="font-size: 16px">{{ $item->name }} (ТОВАРА БОЛЬШЕ НЕТ НА САЙТЕ!!!)</p>
                 @endif
                 <ul class="list-attributes uk-list uk-margin-top-remove">
-                    @foreach($item->options as $key_option => $value_option)
-                        <li><span class="uk-text-muted">{{ $key_option }}:</span> {{ $value_option }}</li>
+                    @foreach($item->options as $key_option => $option)
+                        @if( !is_object($option))
+                            <li><span class="uk-text-muted">{{ $key_option }}:</span> {{ $option }}</li>
+                        @else
+                            @if(array_key_exists('className', $option))
+                                <li><span class="uk-text-muted">@lang('larrock::fields.'.$option->className): {{ $option->title }}</span></li>
+                            @else
+                                <li><span class="uk-text-muted">@lang('larrock::fields.'.$key_option): {{ $option->title }}</span></li>
+                            @endif
+                        @endif
                     @endforeach
                 </ul>
                 <div class="uk-form-row uk-form-row-costrow uk-margin-top-remove">
