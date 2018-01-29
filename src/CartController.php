@@ -13,6 +13,7 @@ use Larrock\ComponentCart\Exceptions\LarrockCartException;
 use Larrock\ComponentDiscount\Helpers\DiscountHelper;
 use Larrock\ComponentUsers\Models\User;
 use Larrock\Core\Component;
+use Larrock\Core\Models\Link;
 use Mail;
 use Session;
 use Validator;
@@ -360,6 +361,13 @@ class CartController extends Controller
     public function cartAdd(Request $request)
     {
         $get_tovar = LarrockCatalog::getModel()->whereId($request->get('id'))->firstOrFail();
+
+        //Модификации товаров
+        $costValueId = $request->get('costValueId');
+        if($costValueId && (int)$costValueId > 0){
+            $get_tovar->cost = $request->get('cost');
+        }
+
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
             $discountHelper = new DiscountHelper();
             $apply_discount = $discountHelper->apply_discountsByTovar($get_tovar, TRUE);
@@ -375,6 +383,13 @@ class CartController extends Controller
         if( !empty($options)){
             $options = (array) json_decode($options);
         }
+        if($costValueId && (int)$costValueId > 0){
+            $link = Link::whereId($costValueId)->first();
+            if($searchParam = $link->model_child::whereId($link->id_child)->first()){
+                $searchParam['className'] = $link->model_child;
+                $options['costValue'] = $searchParam->toArray();
+            }
+        }
 
         $cartid = Cart::instance('main')->search(function ($cartItem, $rowId) use ($request) {
             return $cartItem->id === $request->get('id');
@@ -389,8 +404,14 @@ class CartController extends Controller
                 return response()->json(['status' => 'error', 'message' => 'У вас в корзине все доступное количество товара']);
             }
         }
+
+        $id = $request->get('id');
+        if($costValueId && (int)$costValueId > 0){
+            $id .= '_'. $costValueId;
+        }
+
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-        Cart::instance('main')->add($request->get('id'), $get_tovar->title, $qty, $cost, $options)->associate(LarrockCatalog::getModelName());
+        Cart::instance('main')->add($id, $get_tovar->title, $qty, $cost, $options)->associate(LarrockCatalog::getModelName());
 
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
             $discountHelper = new DiscountHelper();
@@ -487,7 +508,7 @@ class CartController extends Controller
     public function cartRemove(Request $request)
     {
         Cart::instance('main')->remove($request->get('rowid'));
-        return response(Cart::count());
+        return response(Cart::instance('main')->total());
     }
 
     /**

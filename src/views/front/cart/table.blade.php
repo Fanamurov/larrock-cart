@@ -44,6 +44,12 @@
                                     <p><span class="uk-text-muted">{{ $config_row->title }}:</span> {{ $row->model->{$row_key} }}</p>
                                 @endif
                             @endforeach
+                            @if(isset($row->options['costValue']))
+                                <p class="costValueParam">
+                                    <span class="uk-form-label">@lang('larrock::fields.'.$row->options['costValue']['className']):</span>
+                                    {{ $row->options['costValue']['title'] }}
+                                </p>
+                            @endif
                         </div>
                     </td>
                     <td class="spinner-row">
