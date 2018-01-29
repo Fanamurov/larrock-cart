@@ -44,12 +44,16 @@
                                     <p><span class="uk-text-muted">{{ $config_row->title }}:</span> {{ $row->model->{$row_key} }}</p>
                                 @endif
                             @endforeach
-                            @if(isset($row->options['costValue']))
-                                <p class="costValueParam">
-                                    <span class="uk-form-label">@lang('larrock::fields.'.$row->options['costValue']['className']):</span>
-                                    {{ $row->options['costValue']['title'] }}
+                            @foreach($row->options as $key_option => $option)
+                                <p class="{{$key_option}}-param">
+                                    @if(array_key_exists('className', $option))
+                                        <span class="uk-form-label">@lang('larrock::fields.'.$option['className']):</span>
+                                    @else
+                                        <span class="uk-form-label">@lang('larrock::fields.'.$key_option):</span>
+                                    @endif
+                                    {{ $option['title'] }}
                                 </p>
-                            @endif
+                            @endforeach
                         </div>
                     </td>
                     <td class="spinner-row">
