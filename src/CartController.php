@@ -365,7 +365,8 @@ class CartController extends Controller
         //Модификации товаров
         $costValueId = $request->get('costValueId');
         if($costValueId && (int)$costValueId > 0){
-            $get_tovar->cost = $request->get('cost');
+            $costValue = Link::whereId($costValueId)->first();
+            $get_tovar->cost = $costValue->cost;
         }
 
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
