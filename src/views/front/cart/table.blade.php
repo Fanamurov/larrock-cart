@@ -45,7 +45,7 @@
                                 @endif
                             @endforeach
                             @foreach($row->options as $key_option => $option)
-                                @if( !is_object($option))
+                                @if( !is_object($option) && !is_array($option))
                                     <p><span class="uk-text-muted">@lang('larrock::fields.'.$key_option):</span> {{ $option }}</p>
                                 @else
                                     <p class="{{$key_option}}-param">
