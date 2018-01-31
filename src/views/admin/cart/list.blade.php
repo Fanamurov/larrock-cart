@@ -9,6 +9,8 @@
         </div>
     </div>
 
+    @include('larrock::admin.cart.filters')
+
     @if(count($data) === 0)
         <div class="uk-alert uk-alert-warning">Заказов еще нет</div>
     @else

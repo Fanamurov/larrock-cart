@@ -5,12 +5,14 @@ namespace Larrock\ComponentCart;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Larrock\Core\Component;
+use Larrock\Core\Helpers\MessageLarrock;
 use Larrock\Core\Traits\ShareMethods;
 use Mail;
 use Session;
 use Spatie\MediaLibrary\Media;
 use Validator;
 use View;
+use Cache;
 use Larrock\ComponentCart\Facades\LarrockCart;
 use Larrock\ComponentCatalog\Facades\LarrockCatalog;
 use Larrock\ComponentUsers\Facades\LarrockUsers;
@@ -34,13 +36,61 @@ class AdminCartController extends Controller
 	 *
 	 * @return View
 	 */
-	public function index()
+	public function index(Request $request)
 	{
-        $data['data'] = LarrockCart::getModel()->with(['get_user'])->latest()->paginate(30);
-        $data['catalog'] = LarrockCatalog::getModel()->whereActive(1)->get(['id', 'title', 'cost']);
+	    if($request->has('user_search')){
+            $data['data'] = $this->filter($request);
+        }else{
+            $data['data'] = LarrockCart::getModel()->with(['get_user'])->latest()->paginate(30);
+        }
+
+        $cache_key = sha1('catalogItemsAll');
+        $data['catalog'] = Cache::remember($cache_key, 1140, function () {
+            return LarrockCatalog::getModel()->whereActive(1)->get(['id', 'title', 'cost']);
+        });
         $data['users'] = LarrockUsers::getModel()->all();
         return view('larrock::admin.cart.list', $data);
 	}
+
+	protected function filter(Request $request)
+    {
+        $query = LarrockCart::getModel()->with(['get_user']);
+
+        if( !empty($request->get('order_id'))){
+            $query->where('order_id', '=', $request->get('order_id'));
+        }
+        if( !empty($request->get('date_start'))){
+            $query->where('created_at', '>=', $request->get('date_start'));
+        }
+        if( !empty($request->get('date_end'))){
+            $query->where('created_at', '<=', $request->get('date_end'));
+        }
+        if( !empty($request->get('status_order'))){
+            $query->whereStatusOrder($request->get('status_order'));
+        }
+        if( !empty($request->get('status_pay'))){
+            $query->whereStatusPay($request->get('status_pay'));
+        }
+
+        //Поиск по полям юзеров
+        if( !empty($request->get('user_search'))){
+            $user_rows = ['fio', 'address', 'tel', 'email'];
+
+            $query->where(function ($queryLike) use ($user_rows, $request){
+                foreach ($user_rows as $key => $row){
+                    if($key === 0){
+                        $queryLike->where($row, 'like', '%'. $request->get('user_search') .'%');
+                    }else{
+                        $queryLike->orWhere($row, 'like', '%'. $request->get('user_search') .'%');
+                    }
+                }
+            });
+        }
+
+        MessageLarrock::success('Найдено '. $query->count() .' записей');
+
+        return $query->latest()->paginate(30);
+    }
 
 	public function create(Request $request)
 	{
