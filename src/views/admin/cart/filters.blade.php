@@ -39,7 +39,6 @@
                value="@if( !empty(Request::get('user_search'))) {{ Request::get('user_search') }} @endif">
     </div>
     <div class="uk-float-left">
-        <label class="uk-form-label">Выполнить поиск</label>
         <button class="uk-button uk-button-large" type="submit" name="filter">Фильтровать</button>
         @if(Request::has('order_id'))
             <a class="uk-button uk-button-danger" href="/admin/cart" title="Отменить фильтры заказов"><i class="uk-icon-remove"></i></a>

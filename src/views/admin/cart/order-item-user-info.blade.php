@@ -1,4 +1,6 @@
+@if( !isset($formRemove))
 <form class="cart-user-info uk-form uk-form-stacked" action="/admin/{{ $app->name }}/{{ $data->id }}" method="post">
+@endif
     <div class="uk-grid">
         <div class="uk-width-1-1 uk-width-medium-1-2">
             <div class="uk-form-row">
@@ -80,12 +82,16 @@
                 <label class="uk-form-label" for="comment_admin{{ $data->order_id }}">Скрытый комментарий:</label>
                 <textarea name="comment_admin" id="comment_admin{{ $data->order_id }}" class="not-editor uk-width-1-1" rows="3">{{ $data->comment_admin }}</textarea>
             </div>
-            <div class="uk-form-row">
-                <button type="submit" class="uk-button uk-button-primary uk-button-large uk-width-1-1">Сохранить</button>
-            </div>
-            <input name="_method" type="hidden" value="PUT">
-            <input type="hidden" name="order_id" value="{{ $data->order_id }}">
-            {{ csrf_field() }}
+            @if( !isset($formRemove))
+                <div class="uk-form-row">
+                    <button type="submit" class="uk-button uk-button-primary uk-button-large uk-width-1-1">Сохранить</button>
+                </div>
+                <input name="_method" type="hidden" value="PUT">
+                <input type="hidden" name="order_id" value="{{ $data->order_id }}">
+                {{ csrf_field() }}
+            @endif
         </div>
     </div>
+@if( !isset($formRemove))
 </form>
+@endif

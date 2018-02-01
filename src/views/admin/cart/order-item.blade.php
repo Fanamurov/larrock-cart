@@ -15,14 +15,23 @@
                         {{ csrf_field() }}
                         <button type="submit" class="uk-button uk-button-danger uk-button-small please_conform">Удалить заказ</button>
                     </form>
-                    <p class="uk-h2 uk-margin-top-remove">Заказ #{{ $data->order_id }} <small class="uk-text-muted">{{ $data->updated_at }}</small></p>
+                    <p class="uk-h2 uk-margin-top-remove">Заказ #{{ $data->order_id }}
+                        <small class="uk-text-muted">{{ Carbon\Carbon::parse($data->updated_at)->format('d/M/Y H:i') }}</small></p>
                     @include('larrock::admin.cart.order-item-tovars')
                 </div>
                 <div class="uk-width-1-1 uk-width-medium-6-10">
                     @include('larrock::admin.cart.order-item-user-info')
-                    @if(view()->exists('larrock::admin.cart.payment-data'))
+                    @if($data->payment_data)
                         @include('larrock::admin.cart.payment-data')
                     @endif
+
+                    <div class="notifys">
+                        <form class="uk-form" method="post" action="{{ route('cart.sendNotify') }}">
+                            <input type="hidden" name="order_id" value="{{ $data->order_id }}">
+                            {{ csrf_field() }}
+                            <button class="uk-button" type="submit">Отправить детали заказа на email покупателя</button>
+                        </form>
+                    </div>
                 </div>
             </div>
             @if($data->status_order === 'Завершен' || $data->status_order === 'Отменен')

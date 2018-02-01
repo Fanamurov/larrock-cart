@@ -59,10 +59,10 @@
 </div>
 <div class="uk-form-row totalcost-row uk-h2 uk-margin-top">Итого: {{ $data->cost }} рублей</div>
 <div class="uk-form-row uk-form">
-    <select class="add_to_cart" data-order_id="{{ $data->id }}">
+    <select class="add_to_cart uk-width-1-1" data-order_id="{{ $data->id }}">
         <option>--- Добавить к заказу ---</option>
         @foreach($catalog as $catalog_item)
-            <option value="{{ $catalog_item->id }}">{{ $catalog_item->title }} - {{ $catalog_item->cost }} руб.</option>
+            <option value="{{ $catalog_item->id }}">{{ $catalog_item->title }} - {{ $catalog_item->first_cost_value }} руб.</option>
         @endforeach
     </select>
 </div>

@@ -18,8 +18,9 @@ Route::group(['prefix' => 'admin'], function(){
         'edit' => 'admin.cart.edit',
     ]]);
     Route::put('/cart/qtyItem/{id}', 'Larrock\ComponentCart\AdminCartController@editQtyItem')->name('cart.editQtyItem');
-    Route::get('/cart/check/{id}', 'Larrock\ComponentCart\AdminCartController@docCheck')->name('cart.check');
-    Route::get('/cart/delivery/{id}', 'Larrock\ComponentCart\AdminCartController@docDelivery')->name('cart.delivery');
+    Route::post('/cart/getTovarForCreate', 'Larrock\ComponentCart\AdminCartController@getTovarForCreate')->name('cart.getTovarForCreate');
+    Route::post('/cart/createOrder', 'Larrock\ComponentCart\AdminCartController@createOrder')->name('cart.createOrder');
+    Route::post('/cart/sendNotify', 'Larrock\ComponentCart\AdminCartController@sendNotify')->name('cart.sendNotify');
 });
 
 Breadcrumbs::register('admin.'. LarrockCart::getName() .'.index', function($breadcrumbs){

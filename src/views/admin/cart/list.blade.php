@@ -4,12 +4,13 @@
 @section('content')
     <div class="container-head uk-margin-bottom">
         {!! Breadcrumbs::render('admin.cart.index') !!}
-        <div class="add-panel uk-hidden">
-            <a class="uk-button uk-button-primary uk-float-right" href="/admin/{{ $app->name }}/create">Добавить заказ</a>
-        </div>
     </div>
 
     @include('larrock::admin.cart.filters')
+
+    <div class="add-panel uk-width-1-1 uk-text-right uk-margin-bottom">
+        <a class="uk-button uk-button-large uk-button-primary" href="/admin/{{ $app->name }}/create">Создать новый заказ</a>
+    </div>
 
     @if(count($data) === 0)
         <div class="uk-alert uk-alert-warning">Заказов еще нет</div>

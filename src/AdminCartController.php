@@ -2,10 +2,13 @@
 
 namespace Larrock\ComponentCart;
 
+use Cart;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Larrock\ComponentCatalog\CatalogComponent;
 use Larrock\Core\Component;
 use Larrock\Core\Helpers\MessageLarrock;
+use Larrock\Core\Models\Link;
 use Larrock\Core\Traits\ShareMethods;
 use Mail;
 use Session;
@@ -46,12 +49,17 @@ class AdminCartController extends Controller
 
         $cache_key = sha1('catalogItemsAll');
         $data['catalog'] = Cache::remember($cache_key, 1140, function () {
-            return LarrockCatalog::getModel()->whereActive(1)->get(['id', 'title', 'cost']);
+            return LarrockCatalog::getModel()->whereActive(1)->get(['id', 'title', 'cost', 'what']);
         });
         $data['users'] = LarrockUsers::getModel()->all();
         return view('larrock::admin.cart.list', $data);
 	}
 
+    /**
+     * Фильтры для вывода заказов
+     * @param Request $request
+     * @return mixed
+     */
 	protected function filter(Request $request)
     {
         $query = LarrockCart::getModel()->with(['get_user']);
@@ -92,19 +100,142 @@ class AdminCartController extends Controller
         return $query->latest()->paginate(30);
     }
 
+    /**
+     * Визард создания нового заказа из админки
+     * @param Request $request
+     * @return array|\Illuminate\Contracts\View\Factory|\Illuminate\Http\RedirectResponse|\Illuminate\View\View
+     */
 	public function create(Request $request)
 	{
-		$add_data = LarrockCart::getModel();
-		$add_data->user_id = $request->user()->id;
-		$add_data->order_id = LarrockCart::getModel()->max('order_id') +1;
-		if($add_data->save()){
-            Session::push('message.success', 'Ошибка. Новый заказ не создан');
-			return back();
-		}
-        Session::push('message.danger', 'Заказ #'. $add_data->order_id .' создан. Обязательно пересохраните заказ с параметрами!');
-        return back();
+        $data['catalog'] = LarrockCatalog::getModel()->whereActive(1)->get();
+        $data['users'] = LarrockUsers::getModel()->all();
+
+	    return view('larrock::admin.cart.createOrder', $data);
 	}
 
+    /**
+     * Получение товаров для добавления через визард
+     * @param Request $request
+     * @return array|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Contracts\View\Factory|\Illuminate\View\View|\Symfony\Component\HttpFoundation\Response
+     */
+	public function getTovarForCreate(Request $request)
+    {
+        if($get_tovar = LarrockCatalog::getModel()->whereActive(1)->whereId($request->get('id'))->with(['get_category'])->first()){
+            foreach ($get_tovar->get_category as $item_category){
+                foreach ($item_category->parent_tree as $category){
+                    if($category->active !== 1){
+                        return response('Товар находится в неопубликованном разделе', 404);
+                    }
+                }
+            }
+            return view('larrock::admin.cart.createOrderItem', ['data' => $get_tovar, 'app' => new CatalogComponent()]);
+        }
+        return response('Товар не найден', 404);
+    }
+
+    /**
+     * ВРЕМЕННОЕ КОСТЫЛЬНОЕ РЕШЕНИЕ
+     * Экшен создания заказа по внесенным из визарда данным
+     * @param Request $request
+     */
+    public function createOrder(Request $request)
+    {
+        //dd($request->all());
+        Cart::instance('main')->destroy();
+        foreach ($request->get('tovar') as $key => $tovar){
+            $params['id'] = $tovar;
+            if($request->has('costValue_'. $tovar)){
+                $params['costValueId'] = $request->get('costValue_'. $tovar);
+            }
+            //TODO:Просто скопирон метод cartAdd(). Переписать
+            $get_tovar = LarrockCatalog::getModel()->whereId($tovar)->firstOrFail();
+
+            //Модификации товаров
+            $costValueId = $params['costValueId'];
+            if($costValueId && (int)$costValueId > 0){
+                $costValue = Link::whereId($costValueId)->first();
+                $get_tovar->cost = $costValue->cost;
+            }
+
+            $cost = $get_tovar->cost;
+            $qty = $request->get('qty', 1);
+            $qty = $qty[$key];
+            if($qty < 1){
+                $qty = 1;
+            }
+            $options = $request->get('options', []);
+            if( !empty($options)){
+                $options = (array) json_decode($options);
+            }
+            if($costValueId && (int)$costValueId > 0){
+                $link = Link::whereId($costValueId)->first();
+                if($searchParam = $link->model_child::whereId($link->id_child)->first()){
+                    $searchParam['className'] = $link->model_child;
+                    $options['costValue'] = $searchParam->toArray();
+                }
+            }
+
+            $cartid = Cart::instance('main')->search(function ($cartItem, $rowId) use ($request) {
+                //return $cartItem->id === $request->get('id');
+            });
+            if($cartid === false){
+                $cartid = Cart::instance('main')->search(function ($cartItem, $rowId) use ($request) {
+                    //return $cartItem->id === (int)$request->get('id');
+                });
+            }
+            if(isset($cartid[0])){
+                if((int)$get_tovar['nalichie'] > 0 && (int)$get_tovar['nalichie'] <= (int)Cart::instance('main')->get($cartid[0])->qty){
+                    //return response()->json(['status' => 'error', 'message' => 'У вас в корзине все доступное количество товара']);
+                }
+            }
+
+            $id = $params['id'];
+            if($costValueId && (int)$costValueId > 0){
+                $id .= '_'. $costValueId;
+            }
+
+            /** @noinspection PhpVoidFunctionResultUsedInspection */
+            Cart::instance('main')->add($id, $get_tovar->title, $qty, $cost, $options)->associate(LarrockCatalog::getModelName());
+            //END cartAdd
+        }
+
+        //TODO:Просто скопирон метод saveOrder(). Переписать
+        $order = [];
+
+        $cartFillableRows = LarrockCart::getFillableRows();
+        foreach ($cartFillableRows as $key => $row){
+            $order[$row] = $request->get($row);
+        }
+
+        if( !empty($request->get('user_id'))){
+            $order['user'] = $request->get('user_id');
+        }
+
+        $order['items'] = Cart::instance('main')->content();
+
+        $order['cost'] = (float)str_replace(',', '', Cart::instance('main')->total());
+        $order['cost_discount'] = NULL;
+
+        $order['status_order'] = $request->get('status_order');
+        $order['status_pay'] = $request->get('status_pay');
+        $order['kupon'] = $request->get('kupon');
+        if( !$order_id = LarrockCart::getModel()->max('order_id')){
+            $order_id = 1;
+        }
+        $order['order_id'] = ++$order_id;
+
+        //dd($order);
+        $create_order = LarrockCart::getModel()->create($order);
+        Cart::instance('main')->destroy();
+        Session::push('message.success', 'Ваш заказ #'. $create_order->order_id .' успешно добавлен');
+        return redirect()->to('/admin/cart');
+    }
+
+    /**
+     * Удаление конкретного товара из заказа
+     * @param Request $request
+     * @return $this|\Illuminate\Http\RedirectResponse
+     */
 	public function removeItem(Request $request)
 	{
 		$id = $request->get('id');
@@ -191,7 +322,7 @@ class AdminCartController extends Controller
             $options[$key] = $option;
         }
 
-        \Cart::instance('temp')->add(str_slug($tovar->title), $tovar->title, $qty, $tovar->cost, $options)->associate(\LarrockCatalog::getModelName());
+        \Cart::instance('temp')->add(str_slug($tovar->title), $tovar->title, $qty, $request->get('costValue'), $options)->associate(\LarrockCatalog::getModelName());
         $cart = \Cart::instance('temp')->content();
 
         foreach ($items as $item){
@@ -290,7 +421,9 @@ class AdminCartController extends Controller
 		$order->status_order = 'Удален';
 
 		$mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
-        $mails[] = $order->email;
+		if( !empty($order->email)){
+            $mails[] = $order->email;
+        }
 
 		$subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' удален';
         /** @noinspection PhpVoidFunctionResultUsedInspection */
@@ -331,4 +464,20 @@ class AdminCartController extends Controller
         \Log::info('ORDER CHANGE: #'. $order->order_id .'. Order: '. json_encode($order));
         Session::push('message.success', 'На email покупателя отправлено письмо с деталями заказа');
 	}
+
+	public function sendNotify(Request $request)
+    {
+        if($order = LarrockCart::getModel()->whereOrderId($request->get('order_id'))->first()){
+            if( !empty($order->email)){
+                $this->mailFullOrderChange($request, $order,
+                    'Уведомление о статусе заказа #'. $request->get('order_id') .' на сайте '.
+                    env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')));
+            }else{
+                MessageLarrock::danger('У покупателя из заказа #'. $request->get('order_id') .' не указан email');
+            }
+        }else{
+            MessageLarrock::danger('Заказа #'. $request->get('order_id') .' нет в нашей базе');
+        }
+        return back();
+    }
 }
