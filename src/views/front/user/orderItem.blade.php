@@ -29,6 +29,9 @@
                         @endif
                     @else
                         <span class="success-pay">Оплачено {{ $data->cost }} руб.</span>
+                        @if( !empty($data->invoiceId) && isset($data->payment_data->status))
+                            @include('larrock::admin.cart.payment-data')
+                        @endif
                     @endif
                 </div>
                 <div class="uk-clearfix"></div>
