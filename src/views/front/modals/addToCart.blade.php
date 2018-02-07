@@ -33,22 +33,6 @@
                                     @endif
                                 @endforeach
                             </div>
-                            <div class="params uk-form uk-form-horizontal">
-                                @foreach($app->rows as $key => $value)
-                                    @if($value->user_select && isset($value->connect->relation_name) && count($data->{$value->connect->relation_name}) > 0)
-                                        <div class="uk-form-row">
-                                            <label class="uk-form-label control-label-select" for="params-{{ $key }}">{{ $value->title }}:</label>
-                                            <div class="uk-form-controls">
-                                                <select class="tovar-params" name="{{ $key }}" id="params-{{ $key }}" data-title="{{ $value->title }}">
-                                                    @foreach($data->{$value->connect->relation_name} as $value)
-                                                        <option value="{{ $value->title }}">{{ $value->title }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-                                    @endif
-                                @endforeach
-                            </div>
                             <hr/>
                             <div class="uk-grid">
                                 <div class="uk-width-3-10">

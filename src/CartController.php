@@ -10,6 +10,7 @@ use Cart;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Larrock\ComponentCart\Exceptions\LarrockCartException;
+use Larrock\ComponentCatalog\CatalogComponent;
 use Larrock\ComponentDiscount\Helpers\DiscountHelper;
 use Larrock\ComponentUsers\Models\User;
 use Larrock\Core\Component;
@@ -549,5 +550,32 @@ class CartController extends Controller
             Session::push('message.danger', 'Произошла ошибка во время отмены заказа');
         }
         return back()->withInput();
+    }
+
+    /**
+     * Ajax
+     * @param Request $request
+     * @return View|Response
+     */
+    public function getTovar(Request $request)
+    {
+        if($get_tovar = LarrockCatalog::getModel()->whereActive(1)->whereId($request->get('id'))->with(['get_category'])->first()){
+            $check_active_category = NULL;
+            foreach ($get_tovar->get_category as $item_category){
+                foreach ($item_category->parent_tree_active as $category){
+                    if($category->active === 1 && $category->level === 1){
+                        $check_active_category = TRUE;
+                    }
+                }
+            }
+            if( !$check_active_category){
+                return response('Товар находится в неопубликованном разделе', 404);
+            }
+            if($request->get('in_template', 'true') === 'true'){
+                return view(config('larrock.views.catalog.modal', 'larrock::front.modals.addToCart'), ['data' => $get_tovar, 'app' => new CatalogComponent()]);
+            }
+            return response()->json($get_tovar);
+        }
+        return response('Товар не найден', 404);
     }
 }
