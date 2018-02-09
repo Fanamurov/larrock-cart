@@ -6,7 +6,7 @@
                 <h2 class="uk-margin-top-remove">{{ $data->title }}</h2>
             </div>
             <div class="modal-body">
-                <form id="ModalToCart-form" action="{{ route('cart.add') }}" method="post" class="uk-form uk-form-stacked">
+                <form id="ModalToCart-form" action="{{ route('admin.cart.add') }}" method="post" class="uk-form uk-form-stacked">
                     <div class="uk-grid">
                         <div class="uk-width-3-10">
                             @foreach($data->getMedia('images')->sortByDesc('order_column') as $key => $image)

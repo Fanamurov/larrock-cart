@@ -2,7 +2,6 @@
 
 namespace Larrock\ComponentCart;
 
-use Cart;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Larrock\ComponentCatalog\CatalogComponent;
@@ -12,13 +11,13 @@ use Larrock\Core\Models\Link;
 use Larrock\Core\Traits\ShareMethods;
 use Mail;
 use Session;
-use Spatie\MediaLibrary\Media;
 use Validator;
 use View;
 use Cache;
 use Larrock\ComponentCart\Facades\LarrockCart;
 use Larrock\ComponentCatalog\Facades\LarrockCatalog;
 use Larrock\ComponentUsers\Facades\LarrockUsers;
+use Gloudemans\Shoppingcart\Cart;
 
 class AdminCartController extends Controller
 {
@@ -96,7 +95,6 @@ class AdminCartController extends Controller
         }
 
         MessageLarrock::success('Найдено '. $query->count() .' записей');
-
         return $query->latest()->paginate(30);
     }
 
@@ -140,8 +138,7 @@ class AdminCartController extends Controller
      */
     public function createOrder(Request $request)
     {
-        //dd($request->all());
-        Cart::instance('main')->destroy();
+        \Cart::instance('temp')->destroy();
         foreach ($request->get('tovar') as $key => $tovar){
             $params['id'] = $tovar;
             if($request->has('costValue_'. $tovar)){
@@ -175,28 +172,13 @@ class AdminCartController extends Controller
                 }
             }
 
-            $cartid = Cart::instance('main')->search(function ($cartItem, $rowId) use ($request) {
-                //return $cartItem->id === $request->get('id');
-            });
-            if($cartid === false){
-                $cartid = Cart::instance('main')->search(function ($cartItem, $rowId) use ($request) {
-                    //return $cartItem->id === (int)$request->get('id');
-                });
-            }
-            if(isset($cartid[0])){
-                if((int)$get_tovar['nalichie'] > 0 && (int)$get_tovar['nalichie'] <= (int)Cart::instance('main')->get($cartid[0])->qty){
-                    //return response()->json(['status' => 'error', 'message' => 'У вас в корзине все доступное количество товара']);
-                }
-            }
-
             $id = $params['id'];
             if($costValueId && (int)$costValueId > 0){
                 $id .= '_'. $costValueId;
             }
 
             /** @noinspection PhpVoidFunctionResultUsedInspection */
-            Cart::instance('main')->add($id, $get_tovar->title, $qty, $cost, $options)->associate(LarrockCatalog::getModelName());
-            //END cartAdd
+            \Cart::instance('temp')->add($id, $get_tovar->title, $qty, $cost, $options)->associate(LarrockCatalog::getModelName());
         }
 
         //TODO:Просто скопирон метод saveOrder(). Переписать
@@ -226,7 +208,7 @@ class AdminCartController extends Controller
 
         //dd($order);
         $create_order = LarrockCart::getModel()->create($order);
-        Cart::instance('main')->destroy();
+        \Cart::instance('temp')->destroy();
         Session::push('message.success', 'Ваш заказ #'. $create_order->order_id .' успешно добавлен');
         return redirect()->to('/admin/cart');
     }
@@ -259,8 +241,7 @@ class AdminCartController extends Controller
 	}
 
 	/**
-	 * Update the specified resource in storage.
-	 *
+	 * Изменение заказа
 	 * @param  \Illuminate\Http\Request  $request
 	 * @param  int  $id
 	 * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response
@@ -301,41 +282,86 @@ class AdminCartController extends Controller
 	}
 
     /**
-     * Добавление товара к заказу
+     * Добавление товара в уже существующий заказ
      * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
-	public function store(Request $request)
+    public function cartAdd(Request $request)
     {
-        $id = $request->get('id');
-        $qty = $request->get('kolvo');
+        \Cart::instance('temp')->destroy();
         if( !$order = LarrockCart::getModel()->whereOrderId($request->get('order_id'))->first()){
-            Session::push('message.danger', 'Такого товара на сайте нет');
+            Session::push('message.danger', 'Такого заказа #'. $request->get('order_id') .' на сайте нет');
             return back();
         }
 
-        $items = $order->items;
-        $tovar = \LarrockCatalog::getModel()->whereId($id)->firstOrFail();
-
-        $options = [];
-        foreach ($request->except(['id', 'kolvo', 'order_id', '_token']) as $key => $option){
-            $options[$key] = $option;
+        if( !$get_tovar = LarrockCatalog::getModel()->whereId($request->get('id'))->first()){
+            Session::push('message.danger', 'Такого товара #'. $request->get('id') .' на сайте нет');
+            return back();
         }
 
-        \Cart::instance('temp')->add(str_slug($tovar->title), $tovar->title, $qty, $request->get('costValue'), $options)->associate(\LarrockCatalog::getModelName());
-        $cart = \Cart::instance('temp')->content();
-
-        foreach ($items as $item){
-            $cart->put($item->rowId, $item);
-            $order->cost += $item->qty * $item->price;
+        //Добавляем уже существуеющие детали заказа
+        foreach ($order->items as $item){
+            \Cart::instance('temp')->add($item->id, $item->name, $item->qty, $item->price, (array)$item->options)->associate(LarrockCatalog::getModelName());
         }
 
+        //Модификации товаров
+        $costValueId = $request->get('costValueId');
+        if($costValueId && (int)$costValueId > 0){
+            $costValue = Link::whereId($costValueId)->first();
+            $get_tovar->cost = $costValue->cost;
+        }
+
+        if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
+            $discountHelper = new DiscountHelper();
+            $apply_discount = $discountHelper->apply_discountsByTovar($get_tovar, TRUE);
+            $cost = $apply_discount->cost;
+        }else{
+            $cost = $get_tovar->cost;
+        }
+        $qty = $request->get('qty', 1);
+        if($qty < 1){
+            $qty = 1;
+        }
+        $options = $request->get('options', []);
+        if( !empty($options)){
+            $options = (array) json_decode($options);
+        }
+        if($costValueId && (int)$costValueId > 0){
+            $link = Link::whereId($costValueId)->first();
+            if($searchParam = $link->model_child::whereId($link->id_child)->first()){
+                $searchParam['className'] = $link->model_child;
+                $options['costValue'] = $searchParam->toArray();
+            }
+        }
+
+        $id = $request->get('id');
+        if($costValueId && (int)$costValueId > 0){
+            $id .= '_'. $costValueId;
+        }
+
+        if(isset($cartid[0])){
+            if((int)$get_tovar['nalichie'] > 0 && (int)$get_tovar['nalichie'] <= (int)\Cart::instance('temp')->get($cartid[0])->qty){
+                return response()->json(['status' => 'error', 'message' => 'У вас в корзине все доступное количество товара']);
+            }
+        }
+
+        $cartid = \Cart::instance('temp')->search(function ($cartItem, $rowId) use ($id) {
+            return $cartItem->id === $id;
+        });
+
+        if(count($cartid) > 0){
+            $rowIdUpdate = $cartid->first()->rowId;
+            $qtyUpdate = $cartid->first()->qty + $qty;
+            \Cart::instance('temp')->update($rowIdUpdate, $qtyUpdate);
+        }else{
+            \Cart::instance('temp')->add($id, $get_tovar->title, $qty, $cost, $options)->associate(LarrockCatalog::getModelName());
+        }
+
+        $order->items = \Cart::instance('temp')->content();
         \Cart::instance('temp')->destroy();
-        $order->items = $cart;
 
         if($order->save()){
-            $this->mailFullOrderChange($request, $order);
-            Session::push('message.success', 'Товар '. $tovar->title .' успешно добавлен к заказу');
+            Session::push('message.success', 'Товар '. $get_tovar->title .' успешно добавлен к заказу');
         }else{
             Session::push('message.danger', 'Добавить товар к заказу не удалось');
         }
@@ -347,7 +373,6 @@ class AdminCartController extends Controller
 	 * Изменение количества товара в заказе
 	 * @param Request $request
 	 * @param         $id
-	 *
 	 * @return AdminCartController|\Illuminate\Http\RedirectResponse
      */
 	public function editQtyItem(Request $request, $id)
@@ -390,8 +415,7 @@ class AdminCartController extends Controller
 	}
 
 	/**
-	 * Remove the specified resource from storage.
-	 *
+	 * Удаление заказа
 	 * @param  int  $id
 	 * @return \Illuminate\Http\Response
 	 */
@@ -440,7 +464,6 @@ class AdminCartController extends Controller
 
 	/**
 	 * Отправка email'а об изменении заказа
-	 *
 	 * @param Request $request
 	 * @param         $order
 	 * @param null    $subject
@@ -465,6 +488,11 @@ class AdminCartController extends Controller
         Session::push('message.success', 'На email покупателя отправлено письмо с деталями заказа');
 	}
 
+    /**
+     * Отправка письма покупателю
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
 	public function sendNotify(Request $request)
     {
         if($order = LarrockCart::getModel()->whereOrderId($request->get('order_id'))->first()){

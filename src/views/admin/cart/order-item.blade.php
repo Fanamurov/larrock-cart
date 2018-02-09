@@ -24,14 +24,6 @@
                     @if($data->payment_data)
                         @include('larrock::admin.cart.payment-data')
                     @endif
-
-                    <div class="notifys">
-                        <form class="uk-form" method="post" action="{{ route('cart.sendNotify') }}">
-                            <input type="hidden" name="order_id" value="{{ $data->order_id }}">
-                            {{ csrf_field() }}
-                            <button class="uk-button" type="submit">Отправить детали заказа на email покупателя</button>
-                        </form>
-                    </div>
                 </div>
             </div>
             @if($data->status_order === 'Завершен' || $data->status_order === 'Отменен')

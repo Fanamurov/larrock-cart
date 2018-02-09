@@ -15,6 +15,7 @@ Route::group(['prefix' => 'admin'], function(){
         'index' => 'admin.cart.index',
         'edit' => 'admin.cart.edit',
     ]]);
+    Route::post('/ajax/cartAdd', 'Larrock\ComponentCart\AdminCartController@cartAdd')->name('admin.cart.add');
     Route::put('/cart/qtyItem/{id}', 'Larrock\ComponentCart\AdminCartController@editQtyItem')->name('cart.editQtyItem');
     Route::post('/cart/getTovarForCreate', 'Larrock\ComponentCart\AdminCartController@getTovarForCreate')->name('cart.getTovarForCreate');
     Route::post('/cart/createOrder', 'Larrock\ComponentCart\AdminCartController@createOrder')->name('cart.createOrder');

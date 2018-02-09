@@ -17,16 +17,16 @@
                             {{ $param->title }} - {{ $param->cost }} {{ $data->what }}</label></li>
                 @endforeach
             </ul>
-        @else
-            <div class="cost">
-                @if($data->cost == 0)
-                    <span class="empty-cost">цена договорная</span>
-                @else
-                    Цена: <span class="default-cost"><span class="cost_value">{{ $data->first_cost_value }}</span> <span class="what">{{ $data->what }}</span></span>
-                @endif
-            </div>
         @endif
     @endforeach
+
+    <div class="cost">
+        @if($data->first_cost_value === 0)
+            <span class="empty-cost">цена договорная</span>
+        @else
+            Цена: <span class="default-cost"><span class="cost_value">{{ $data->first_cost_value }}</span> <span class="what">{{ $data->what }}</span></span>
+        @endif
+    </div>
 
     <label class="uk-form-label">Кол-во:</label>
     <input type="text" name="qty[]" value="1">

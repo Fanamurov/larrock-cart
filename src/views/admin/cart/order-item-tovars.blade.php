@@ -28,7 +28,7 @@
                 <ul class="list-attributes uk-list uk-margin-top-remove">
                     @foreach($item->options as $key_option => $option)
                         @if( !is_object($option))
-                            <li><span class="uk-text-muted">{{ $key_option }}:</span> {{ $option }}</li>
+                            <li><span class="uk-text-muted">@lang('larrock::fields.'.$key_option):</span> {{ $option }}</li>
                         @else
                             @if(array_key_exists('className', $option))
                                 <li><span class="uk-text-muted">@lang('larrock::fields.'.$option->className): {{ $option->title }}</span></li>

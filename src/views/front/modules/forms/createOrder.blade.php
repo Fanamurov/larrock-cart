@@ -77,7 +77,7 @@
             @endif
 
             @if(isset($app->rows['method_pay']))
-                <div class="uk-form-row">
+                <div class="uk-form-row row-address" style="display: none;">
                     <label for="address" class="uk-form-label">Адрес доставки:</label>
                     <textarea name="address" id="address" class="uk-width-1-1" placeholder="Укажите город, улицу, дом, номер квартиры/офиса" required>@if(Auth::guard()->check() && empty(old('address'))){{ Auth::guard()->user()->address }}@else {{ old('address') }} @endif</textarea>
                 </div>
@@ -111,6 +111,21 @@
 
 @push('scripts')
     <script>
+        var method_delivery = $('select[name=method_delivery] option:selected').val();
+        if(method_delivery === 'самовывоз'){
+            $('.row-address').slideUp('slow')
+        }else{
+            $('.row-address').slideDown('slow')
+        }
+        $('select[name=method_delivery]').change(function () {
+            var method_delivery = $('select[name=method_delivery] option:selected').val();
+            if(method_delivery === 'самовывоз'){
+                $('.row-address').slideUp('slow')
+            }else{
+                $('.row-address').slideDown('slow')
+            }
+        });
+
         $('input[name=without_registry]').change(function(){
             if($('input[name=without_registry]:checked').val() === 'true'){
                 $('input[name=password]').prop('disabled', true);

@@ -19,21 +19,13 @@
             @foreach($cart as $row)
                 <tr class="cart_item_row" data-rowid="{{ $row->rowId }}">
                     <td class="tovar_image uk-hidden-small">
-                        @if($row->model->getFirstImage)
-                            <a href="{{ $row->model->getFirstImage->getUrl() }}" target="_blank">
-                                <img src="{{ $row->model->getFirstImage->getUrl('140x140') }}" alt="{{ $row->name }}" class="all-width">
-                            </a>
-                        @endif
+                        <img src="{{ $row->model->first_image }}" class="catalogImage max-width pointer" data-id="{{ $row->model->id }}" itemprop="image">
                     </td>
                     <td class="description-row">
-                        @if($row->model->getFirstImage)
-                            <div class="uk-hidden-medium uk-hidden-large">
-                                <a href="{{ $row->model->getFirstImage->getUrl() }}" target="_blank">
-                                    <img src="{{ $row->model->getFirstImage->getUrl('140x140') }}" alt="{{ $row->name }}" class="all-width">
-                                </a>
-                            </div>
-                        @endif
-                        @if(config('larrock.catalog.ShowItemPage') === true)
+                        <div class="uk-hidden-medium uk-hidden-large">
+                            <img src="{{ $row->model->first_image }}" class="catalogImage max-width pointer" data-id="{{ $row->model->id }}" itemprop="image">
+                        </div>
+                        @if(config('larrock.catalog.ShowItemPage', TRUE) === TRUE)
                             <p class="uk-h4"><a href="{{ $row->model->full_url }}">{{ $row->name }}</a></p>
                         @else
                             <p class="uk-h4">{{ $row->name }}</p>
