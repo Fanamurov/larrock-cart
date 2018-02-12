@@ -5,6 +5,7 @@ namespace Larrock\ComponentCart;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Larrock\ComponentCatalog\CatalogComponent;
+use Larrock\ComponentDiscount\Helpers\DiscountHelper;
 use Larrock\Core\Component;
 use Larrock\Core\Helpers\MessageLarrock;
 use Larrock\Core\Models\Link;
@@ -148,10 +149,12 @@ class AdminCartController extends Controller
             $get_tovar = LarrockCatalog::getModel()->whereId($tovar)->firstOrFail();
 
             //Модификации товаров
-            $costValueId = $params['costValueId'];
-            if($costValueId && (int)$costValueId > 0){
-                $costValue = Link::whereId($costValueId)->first();
-                $get_tovar->cost = $costValue->cost;
+            if(isset($params['costValueId'])){
+                $costValueId = $params['costValueId'];
+                if($costValueId && (int)$costValueId > 0){
+                    $costValue = Link::whereId($costValueId)->first();
+                    $get_tovar->cost = $costValue->cost;
+                }
             }
 
             $cost = $get_tovar->cost;
@@ -164,16 +167,15 @@ class AdminCartController extends Controller
             if( !empty($options)){
                 $options = (array) json_decode($options);
             }
-            if($costValueId && (int)$costValueId > 0){
+
+            $id = $params['id'];
+
+            if(isset($params['costValueId']) && $costValueId && (int)$costValueId > 0){
                 $link = Link::whereId($costValueId)->first();
                 if($searchParam = $link->model_child::whereId($link->id_child)->first()){
                     $searchParam['className'] = $link->model_child;
                     $options['costValue'] = $searchParam->toArray();
                 }
-            }
-
-            $id = $params['id'];
-            if($costValueId && (int)$costValueId > 0){
                 $id .= '_'. $costValueId;
             }
 
@@ -182,34 +184,40 @@ class AdminCartController extends Controller
         }
 
         //TODO:Просто скопирон метод saveOrder(). Переписать
-        $order = [];
-
-        $cartFillableRows = LarrockCart::getFillableRows();
-        foreach ($cartFillableRows as $key => $row){
-            $order[$row] = $request->get($row);
-        }
+        $order = LarrockCart::getModel();
+        $order->fill($request->all());
 
         if( !empty($request->get('user_id'))){
-            $order['user'] = $request->get('user_id');
+            $order->user = $request->get('user_id');
         }
 
-        $order['items'] = Cart::instance('main')->content();
+        $order->items = \Cart::instance('temp')->content();
 
-        $order['cost'] = (float)str_replace(',', '', Cart::instance('main')->total());
-        $order['cost_discount'] = NULL;
+        if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
+            $discountHelper = new DiscountHelper();
+            $discounts = $discountHelper->check(\Cart::instance('temp')->total(), $request->get('kupon'));
+            $order->cost = $discounts->total;
+            $order->discount = $discounts;
+            if($discounts->d_kupon){
+                $order->kupon = $discounts->d_kupon->word;
+            }
+            $discounts->countApplyDiscounts();
+        }else{
+            $order->cost = (float)str_replace(',', '', Cart::instance('temp')->total());
+        }
 
-        $order['status_order'] = $request->get('status_order');
-        $order['status_pay'] = $request->get('status_pay');
-        $order['kupon'] = $request->get('kupon');
+        $order->status_order = $request->get('status_order');
+        $order->status_pay = $request->get('status_pay');
         if( !$order_id = LarrockCart::getModel()->max('order_id')){
             $order_id = 1;
         }
-        $order['order_id'] = ++$order_id;
+        $order->order_id = ++$order_id;
 
-        //dd($order);
-        $create_order = LarrockCart::getModel()->create($order);
+        $create_order = $order->save();
         \Cart::instance('temp')->destroy();
-        Session::push('message.success', 'Ваш заказ #'. $create_order->order_id .' успешно добавлен');
+        MessageLarrock::success('Ваш заказ #'. $order->order_id .' успешно добавлен администратором', TRUE);
+        MessageLarrock::success('По-умолчанию создание заказа администратором не является поводом для отправки 
+        уведомления покупателю по email. Воспользуйтесь соответствующей кнопкой у заказа');
         return redirect()->to('/admin/cart');
     }
 

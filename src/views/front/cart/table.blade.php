@@ -87,98 +87,22 @@
                     <td class="uk-hidden-small uk-text-right"><button type="button" class="removeCartItem uk-button uk-button-danger uk-button-small" data-rowid="{{ $row->rowId }}">Удалить</button></td>
                 </tr>
             @endforeach
-            @if(isset($discount) && $discount['profit'] > 0)
-                <tr class="total-row uk-hidden">
-                    <td colspan="6">
-                        <p class="uk-text-right row-total uk-text-muted">Сумма: <strong class="total">{!! Cart::instance('main')->total() !!}</strong> руб.</p>
-                    </td>
-                </tr>
-                <tr class="discount_row">
-                    <td colspan="6">
-                        <p class="uk-text-right row-total">Всего к оплате со скидкой: <strong class="total_discount uk-h1">{!! $discount['cost_after_discount'] !!}</strong> руб.</p>
-                        @if(array_key_exists('cart', $discount['discount']))
-                            <div class="discount-row-text uk-text-right uk-text-success">
-                                {!! $discount['discount']['cart']->description !!} &mdash;
-                                @if((integer)$discount['discount']['cart']->percent > 0)
-                                    {!! $discount['discount']['cart']->percent !!}%
-                                @endif
-                                @if((integer)$discount['discount']['cart']->num > 0)
-                                    {!! $discount['discount']['cart']->num !!} руб.
-                                @endif
-                            </div>
+            <tr class="total-row">
+                <td colspan="6">
+                    @if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount'))
+                        <p class="uk-text-right row-total">Всего к оплате: <strong class="total">{!! $discountsShare->total !!}</strong> руб.</p>
+                        @if($discountsShare->profit > 0)
+                            <p class="uk-text-right row-clear-total">Сумма заказа: <del><strong class="clear-total">{!! $discountsShare->clear_total !!}</strong> руб.</del></p>
+                            <p class="uk-text-right row-total-discount">Ваша скидка: <strong class="total-discount">{{ $discountsShare->profit }}</strong> руб.</p>
                         @endif
-                        @if(array_key_exists('history', $discount['discount']))
-                            <div class="discount-row-text uk-text-right uk-text-success">
-                                {!! $discount['discount']['history']->description !!} &mdash;
-                                @if((integer)$discount['discount']['history']->percent > 0)
-                                    {!! $discount['discount']['history']->percent !!}%
-                                @endif
-                                @if((integer)$discount['discount']['history']->num > 0)
-                                    {!! $discount['discount']['history']->num !!} руб.
-                                @endif
-                            </div>
-                        @endif
-                        @if(array_key_exists('category', $discount['discount']))
-                            <div class="discount-row-text uk-text-right uk-text-success">
-                                {!! $discount['discount']['category']->description !!} &mdash;
-                                @if((integer)$discount['discount']['category']->percent > 0)
-                                    {!! $discount['discount']['category']->percent !!}%
-                                @endif
-                                @if((integer)$discount['discount']['category']->num > 0)
-                                    {!! $discount['discount']['category']->num !!} руб.
-                                @endif
-                            </div>
-                        @endif
-                    </td>
-                </tr>
-            @else
-                <tr class="total-row">
-                    <td colspan="6">
+                    @else
                         <p class="uk-text-right row-total">Всего к оплате: <strong class="total">{!! Cart::instance('main')->total() !!}</strong> руб.</p>
-                    </td>
-                </tr>
-            @endif
+                    @endif
+                </td>
+            </tr>
             </tbody>
         </table>
     </form>
-
-    @if(isset($discount) && count($discount_motivate) > 0)
-    <div class="uk-grid motivate-container">
-        <div class="uk-width-1-1">
-            <p class="uk-h2">Накопительные скидки в корзине:</p>
-            <ul class="motivate_list">
-            @foreach($discount_motivate as $motivate)
-                @if($motivate->cost_min < Cart::instance('main')->total())
-                    <li class="uk-text-success">
-                        {!! $motivate->description !!} &mdash; ваша скидка
-                        @if((integer)$motivate->percent > 0)
-                            {!! $motivate->percent !!}%
-                        @endif
-                        @if((integer)$motivate->num > 0)
-                            {!! $motivate->num !!} руб.
-                        @endif
-                    </li>
-                @else
-                    <li>
-                        {!! $motivate->description !!}
-
-                        @if($motivate->cost_min > Cart::instance('main')->total())
-                            Добавьте в корзину товаров на сумму {!! $motivate->cost_min - Cart::instance('main')->total() !!} рублей и получите скидку
-                        @endif
-
-                        @if((integer)$motivate->percent > 0)
-                            {!! $motivate->percent !!}%.
-                        @endif
-                        @if((integer)$motivate->num > 0)
-                            {!! $motivate->num !!} руб.
-                        @endif
-                    </li>
-                @endif
-            @endforeach
-            </ul>
-        </div>
-    </div>
-    @endif
 
     <div class="uk-grid uk-margin-large-top">
         <div class="uk-width-1-1">

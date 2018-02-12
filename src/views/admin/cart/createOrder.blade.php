@@ -18,7 +18,7 @@
         <div class="ibox-content">
             <h1>Шаг 2. Внесение данных покупателя</h1>
             <div class="uk-form uk-form-stacked">
-                @include('larrock::admin.cart.order-item-user-info', ['data' => LarrockUsers::getModel(), 'formRemove' => TRUE])
+                @include('larrock::admin.cart.order-item-user-info', ['data' => LarrockUsers::getModel(), 'formRemove' => TRUE, 'disableSendNotify' => TRUE])
             </div>
         </div>
 

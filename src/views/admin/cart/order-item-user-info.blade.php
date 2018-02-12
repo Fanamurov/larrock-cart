@@ -51,14 +51,16 @@
                 {{ csrf_field() }}
             @endif
 
-            <div class="notifys uk-width-1-1 uk-margin-top">
-                <hr/>
-                <form class="uk-form" method="post" action="{{ route('cart.sendNotify') }}">
-                    <input type="hidden" name="order_id" value="{{ $data->order_id }}">
-                    {{ csrf_field() }}
-                    <button class="uk-button uk-width-1-1" type="submit">Отправить email покупателю</button>
-                </form>
-            </div>
+            @if( !isset($disableSendNotify))
+                <div class="notifys uk-width-1-1 uk-margin-top">
+                    <hr/>
+                    <form class="uk-form" method="post" action="{{ route('cart.sendNotify') }}">
+                        <input type="hidden" name="order_id" value="{{ $data->order_id }}">
+                        {{ csrf_field() }}
+                        <button class="uk-button uk-width-1-1" type="submit">Отправить email покупателю</button>
+                    </form>
+                </div>
+            @endif
         </div>
     </div>
 @if( !isset($formRemove))

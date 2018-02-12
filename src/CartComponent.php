@@ -64,9 +64,6 @@ class CartComponent extends Component
         $row = new FormInput('cost', 'Стоимость заказа');
         $this->rows['cost'] = $row->setDefaultValue(0)->setFillable();
 
-        $row = new FormInput('cost_discount', 'Стоимость со скидкой');
-        $this->rows['cost_discount'] = $row->setDefaultValue(0)->setFillable();
-
         $row = new FormCatalogItems('items', 'Товары в заказе');
         $this->rows['items'] = $row->setFillable();;
 

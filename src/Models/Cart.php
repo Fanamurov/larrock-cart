@@ -115,6 +115,11 @@ class Cart extends Model
         return [];
 	}
 
+    public function getDiscountAttribute($value)
+    {
+        return json_decode($value);
+    }
+
     public function getPaymentDataAttribute($value)
     {
         return json_decode($value);

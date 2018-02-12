@@ -110,25 +110,25 @@
                 </td>
             </tr>
         @endforeach
-        @if($data['cost_discount'] > 0 && $data['cost_discount'] < $data['cost'])
+        @if($data['cost'] > 0)
             <tr>
-                <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;text-align: right" colspan="4">Итого: {!! $data['cost'] !!} руб.</td>
+                <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;text-align: right" colspan="5"><strong>Итого к оплате: {!! $data['cost'] !!} руб.</strong></td>
             </tr>
-            <tr>
-                <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;text-align: right" colspan="4"><strong>Всего к оплате со скидкой: {!! $data['cost_discount'] !!} руб.</strong></td>
-            </tr>
-            @if(isset($data['discount']->discount))
+            @if(isset($data->discount->profit))
                 <tr>
-                    <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif" colspan="4">
-                        <p style="font-weight:700">Примененные скидки:
-                            @if(array_key_exists('cart', $data['discount']->discount))
-                                <sup>*</sup>{{ $data['discount']->discount->cart->description }}<br/>
+                    <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;text-align: right" colspan="5">Скидка: {!! $data->discount->profit !!} руб.</td>
+                </tr>
+                <tr>
+                    <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif" colspan="5">
+                        <p style="font-weight:700">Примененные скидки:<br/>
+                            @if(isset($data->discount->d_cart))
+                                <sup>*</sup>{{ $data->discount->d_cart->description }}<br/>
                             @endif
-                            @if(array_key_exists('history', $data['discount']->discount))
-                                <sup>*</sup>{{ $data['discount']->discount->history->description }}<br/>
+                            @if(isset($data->discount->d_history))
+                                <sup>*</sup>{{ $data->discount->d_history->description }}<br/>
                             @endif
-                            @if(array_key_exists('category', $data['discount']->discount))
-                                <sup>*</sup>{{ $data['discount']->discount->category->description }}<br/>
+                            @if(isset($data->discount->d_kupon))
+                                <sup>*</sup>{{ $data->discount->d_kupon->description }}<br/>
                             @endif
                         </p>
                     </td>
@@ -148,7 +148,7 @@
         </tbody>
     </table>
 
-    <p style="font:18px/20px Calibri,Helvetica,Arial,sans-serif;">Ссылка для оплаты/отслеживания заказов: <a href="{{ env('APP_URL') }}/user" target="_blank" style="color: #ffffff; font-size: 16px; background: #f71f00; padding: 7px 11px; border: 1px solid #d4d4d4; text-decoration: none; font-family: Arial, sans-serif;">личный кабинет</a></p>
+    <p style="font:18px/20px Calibri,Helvetica,Arial,sans-serif;">Ссылка для оплаты/отслеживания заказов: <a href="{{ env('APP_URL') }}/cabinet" target="_blank" style="color: #ffffff; font-size: 16px; background: #f71f00; padding: 7px 11px; border: 1px solid #d4d4d4; text-decoration: none; font-family: Arial, sans-serif;">личный кабинет</a></p>
 @endsection
 
 @section('footer')

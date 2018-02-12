@@ -7,14 +7,10 @@
             <div class="uk-alert order-pay">
                 <div class="@if($data->cost > 0) text-order-pay @endif">
                     @if($data->status_pay !== 'Оплачено')
-                        @if($data->cost_discount > 0 && $data->cost_discount < $data->cost)
-                            <span class="uk-align-left">Всего к оплате со скидкой: <strong class="total">{{ $data->cost_discount }}</strong> руб.</span>
+                        @if($data->cost > 0)
+                            <span class="uk-align-left">Всего к оплате: <strong class="total">{{ $data->cost }}</strong> руб.</span>
                         @else
-                            @if($data->cost > 0)
-                                <span class="uk-align-left">Всего к оплате: <strong class="total">{{ $data->cost }}</strong> руб.</span>
-                            @else
-                                <span class="uk-align-left">К оплате по договорной цене</span>
-                            @endif
+                            <span class="uk-align-left">К оплате по договорной цене</span>
                         @endif
                         @if(isset($config_cart->rows['method_pay']))
                             @if($data->method_pay !== 'наличными')
@@ -35,6 +31,27 @@
                     @endif
                 </div>
                 <div class="uk-clearfix"></div>
+
+                @if($data->cost > 0)
+                    @if(isset($data->discount->profit))
+                        <div class="uk-alert">
+                            <p>Скидка: {!! $data->discount->profit !!} руб.<br/>
+                                <ul>
+                                    @if(isset($data->discount->d_cart))
+                                    <li>{{ $data->discount->d_cart->title }}: {{ $data->discount->d_cart->description }}</li>
+                                    @endif
+                                    @if(isset($data->discount->d_history))
+                                    <li>{{ $data->discount->d_history->title }}: {{ $data->discount->d_history->description }}</li>
+                                    @endif
+                                    @if(isset($data->discount->d_kupon))
+                                    <li>{{ $data->discount->d_kupon->title }}: {{ $data->discount->d_kupon->description }}</li>
+                                    @endif
+                                </ul>
+                            </p>
+                        </div>
+                    @endif
+                @endif
+
                 @if(isset($config_cart->rows['method_pay']))
                     <p class="uk-text-muted">Метод оплаты: {{ $data->method_pay }}</p>
                 @endif

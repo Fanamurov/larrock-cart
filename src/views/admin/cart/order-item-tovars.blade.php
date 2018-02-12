@@ -58,6 +58,23 @@
     @endforeach
 </div>
 <div class="uk-form-row totalcost-row uk-h2 uk-margin-top">Итого: {{ $data->cost }} рублей</div>
+@if(isset($data->discount->profit))
+    <div class="uk-alert">
+        <p>Скидка: {!! $data->discount->profit !!} руб.<br/>
+        <ul>
+            @if(isset($data->discount->d_cart))
+                <li>{{ $data->discount->d_cart->title }}: {{ $data->discount->d_cart->description }}</li>
+            @endif
+            @if(isset($data->discount->d_history))
+                <li>{{ $data->discount->d_history->title }}: {{ $data->discount->d_history->description }}</li>
+            @endif
+            @if(isset($data->discount->d_kupon))
+                <li>{{ $data->discount->d_kupon->title }}: {{ $data->discount->d_kupon->description }}</li>
+            @endif
+        </ul>
+        </p>
+    </div>
+@endif
 <div class="uk-form-row uk-form">
     <select class="add_to_cart uk-width-1-1" data-order_id="{{ $data->id }}">
         <option>--- Добавить к заказу ---</option>

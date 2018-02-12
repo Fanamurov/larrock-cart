@@ -47,7 +47,6 @@ class CartController extends Controller
 
     /**
      * Страница интерфейса корзины
-     *
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|\Illuminate\View\View
      */
     public function getIndex()
@@ -82,18 +81,11 @@ class CartController extends Controller
         }*/
         $seo = ['title' => 'Корзина товаров. Оформление заявки'];
 
-        if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
-            $discountHelper = new DiscountHelper();
-            $discount = $discountHelper->check();
-            $discount_motivate = $discountHelper->motivate_cart_discount(Cart::instance('main')->total());
-        }
-
         return view(config('larrock.views.cart.getIndex', 'larrock::front.cart.table'), compact('cart', 'seo', 'discount', 'discount_motivate' , ['cart', 'seo', 'discount', 'discount_motivate']));
     }
 
     /**
      * Создание заказа, Логин/регистрация пользователя при необходимости
-     *
      * @param Request $request
      * @return $this|\Illuminate\Http\RedirectResponse
      */
@@ -136,7 +128,6 @@ class CartController extends Controller
 
     /**
      * The user has been authenticated.
-     *
      * @param  \Illuminate\Http\Request  $request
      * @param  mixed  $user
      * @return mixed
@@ -148,10 +139,8 @@ class CartController extends Controller
 
     /**
      * Get the failed login response instance.
-     *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Contracts\Auth\Authenticatable|\Symfony\Component\HttpFoundation\Response
-     *
      * @throws ValidationException
      */
     protected function sendFailedLoginResponse(Request $request)
@@ -181,7 +170,6 @@ class CartController extends Controller
 
     /**
      * Create a new user instance after a valid registration.
-     *
      * @param  array  $data
      * @return User
      */
@@ -206,57 +194,46 @@ class CartController extends Controller
 
     /**
      * Сохранение заказа в БД
-     *
      * @param Request $request
      * @return $this|\Illuminate\Http\RedirectResponse
      */
     protected function saveOrder(Request $request)
     {
-        $order = [];
-
-        $cartFillableRows = LarrockCart::getFillableRows();
-        foreach ($cartFillableRows as $key => $row){
-            $order[$row] = $request->get($row);
-        }
+        $order = LarrockCart::getModel();
+        $order->fill($request->all());
 
         if( !$this->withoutRegistry){
-            $order['user'] = $this->user->id;
+            $order->user = $this->user->id;
         }
-        $order['items'] = Cart::instance('main')->content();
-
-        $order['cost'] = (float)str_replace(',', '', Cart::instance('main')->total());
-        $order['cost_discount'] = NULL;
+        $order->items = Cart::instance('main')->content();
 
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
             $discountHelper = new DiscountHelper();
-            if($discount = $discountHelper->check()){
-                if($discount['profit'] > 0 && $discount['cost_after_discount'] > 0){
-                    $order['cost_discount'] = $discount['cost_after_discount'];
-                    $order['discount'] = $discount;
-                }
+            $discounts = $discountHelper->check(NULL, $request->get('kupon'));
+            $order->cost = $discounts->total;
+            $order->discount = $discounts;
+            if($discounts->d_kupon){
+                $order->kupon = $discounts->d_kupon->word;
             }
-
-            //Обрабатываем счетчик использования скидок
-            if(isset($order['discount']->discount)){
-                $discountHelper->discountCountApply($order['discount']->discount);
-            }
+            $discounts->countApplyDiscounts();
+        }else{
+            $order->cost = (float)str_replace(',', '', Cart::instance('main')->total());
         }
 
-        $order['status_order'] = 'Обрабатывается';
-        $order['status_pay'] = 'Не оплачено';
-        $order['kupon'] = $request->get('kupon');
+        $order->status_order = 'Обрабатывается';
+        $order->status_pay = 'Не оплачено';
         if( !$order_id = LarrockCart::getModel()->max('order_id')){
             $order_id = 1;
         }
-        $order['order_id'] = ++$order_id;
+        $order->order_id = ++$order_id;
 
-        if($this->changeTovarStatus($order['items']) && $create_order = LarrockCart::getModel()->create($order)){
-            $this->mailFullOrder($create_order);
-            Session::push('message.success', 'Ваш заказ #'. $create_order->order_id .' успешно добавлен');
+        if($this->changeTovarStatus($order['items']) && $create_order = $order->save()){
+            $this->mailFullOrder($order);
+            Session::push('message.success', 'Ваш заказ #'. $order->order_id .' успешно добавлен');
             Cart::instance('main')->destroy();
 
             if( !$this->withoutRegistry){
-                return redirect()->to('/cabinet');
+                return redirect()->to(route('user.cabiner'));
             }
             return redirect()->to('/');
         }
@@ -296,9 +273,7 @@ class CartController extends Controller
     /**
      * Проверяем наличие товара
      * Меняем количество товара в наличии
-     *
      * @param $cart
-     *
      * @return bool
      */
     protected function changeTovarStatus($cart)
@@ -353,10 +328,8 @@ class CartController extends Controller
 
     /**
      * Add a row to the cart
-     *
      * @param Request $request
      * @see https://github.com/Crinsane/LaravelShoppingcart
-     *
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
      */
     public function cartAdd(Request $request)
@@ -370,13 +343,7 @@ class CartController extends Controller
             $get_tovar->cost = $costValue->cost;
         }
 
-        if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
-            $discountHelper = new DiscountHelper();
-            $apply_discount = $discountHelper->apply_discountsByTovar($get_tovar, TRUE);
-            $cost = $apply_discount->cost;
-        }else{
-            $cost = $get_tovar->cost;
-        }
+        $cost = $get_tovar->cost;
         $qty = $request->get('qty', 1);
         if($qty < 1){
             $qty = 1;
@@ -415,23 +382,22 @@ class CartController extends Controller
         /** @noinspection PhpVoidFunctionResultUsedInspection */
         Cart::instance('main')->add($id, $get_tovar->title, $qty, $cost, $options)->associate(LarrockCatalog::getModelName());
 
+        $count = Cart::instance('main')->count();
+        $total = Cart::instance('main')->total();
+        $profit = NULL;
+
         if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
             $discountHelper = new DiscountHelper();
             $discounts = $discountHelper->check();
-            $total = $discounts['cost_after_discount'];
-            $profit = $discounts['profit'];
-        }else{
-            $total = Cart::instance('main')->total();
-            $profit = 0;
+            $total = $discounts->total;
+            $profit = $discounts->profit;
         }
 
-        return response()->json(['status' => 'success', 'message' => 'Товар добавлен в корзину', 'total' => $total,
-            'total_discount' => $profit, 'count' => Cart::instance('main')->count()]);
+        return response()->json(['status' => 'success', 'message' => 'Товар добавлен в корзину', 'count' => $count, 'total' => $total, 'profit' => $profit]);
     }
 
     /**
      * Empty the cart
-     *
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
      */
     public function cartDestroy()
@@ -442,7 +408,6 @@ class CartController extends Controller
 
     /**
      * Get the price total
-     *
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
      */
     public function cartTotal()
@@ -453,7 +418,6 @@ class CartController extends Controller
 
     /**
      * Get the cart content
-     *
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
      */
     public function cartContent()
@@ -464,9 +428,7 @@ class CartController extends Controller
 
     /**
      * Update params of one row of the cart
-     *
      * @param Request $request
-     *
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
      */
     public function cartUpdate(Request $request)
@@ -477,7 +439,6 @@ class CartController extends Controller
 
     /**
      * Update the quantity of one row of the cart
-     *
      * @param Request $request
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
      * @throws LarrockCartException
@@ -486,25 +447,22 @@ class CartController extends Controller
     {
         if($update = Cart::instance('main')->update($request->get('rowid'), $request->get('qty'))){
             $subtotal = $update->subtotal;
-            $total_discount = 0;
-            if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')){
+            $total = Cart::instance('main')->total();
+            $profit = NULL;
+            if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount')) {
                 $discountHelper = new DiscountHelper();
-                if($discount = $discountHelper->check(NULL, Cart::instance('main')->total())){
-                    if($discount['profit'] > 0 && $discount['cost_after_discount'] > 0){
-                        $total_discount = $discount['cost_after_discount'];
-                    }
-                }
+                $discounts = $discountHelper->check();
+                $total = $discounts->total;
+                $profit = $discounts->profit;
             }
-            return response()->json(['total' => Cart::instance('main')->total(), 'subtotal' => $subtotal, 'total_discount' => $total_discount]);
+            return response()->json(['clear_total' => Cart::instance('main')->total(), 'subtotal' => $subtotal, 'total' => $total, 'profit' => $profit]);
         }
         throw LarrockCartException::withMessage('not valid data input');
     }
 
     /**
      * Remove a row from the cart
-     *
      * @param Request $request
-     *
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
      */
     public function cartRemove(Request $request)
@@ -515,7 +473,6 @@ class CartController extends Controller
 
     /**
      * Remove a row from the cart
-     *
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
      */
     public function cartCount()
@@ -526,7 +483,6 @@ class CartController extends Controller
 
     /**
      * Страница договора-оферты магазина
-     *
      * @return array|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function oferta()
@@ -536,7 +492,6 @@ class CartController extends Controller
 
     /**
      * Удаление заказа
-     *
      * @param $id
      * @return $this
      */
