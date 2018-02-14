@@ -63,7 +63,7 @@
             <tr>
                 <td width="75px" style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;width: 75px">
                     @if(config('larrock.catalog.ShowItemPage') === true && isset($item->catalog->full_url))
-                        <a href="{!! $item->catalog->full_url !!}">
+                        <a href="{{ env('APP_URL') }}{!! $item->catalog->full_url !!}">
                             <img style="width: 75px" src="{{ env('APP_URL') }}{!! $item->catalog->getFirstImage->getUrl('140x140') !!}">
                         </a>
                     @else
