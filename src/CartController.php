@@ -3,6 +3,7 @@
 namespace Larrock\ComponentCart;
 
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller;
@@ -10,17 +11,20 @@ use Cart;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Larrock\ComponentCart\Exceptions\LarrockCartException;
+use Larrock\ComponentCart\Helpers\CartMail;
 use Larrock\ComponentCatalog\CatalogComponent;
 use Larrock\ComponentDiscount\Helpers\DiscountHelper;
 use Larrock\ComponentUsers\Models\User;
 use Larrock\Core\Component;
+use Larrock\Core\Helpers\MessageLarrock;
 use Larrock\Core\Models\Link;
 use Mail;
-use Session;
+use Response;
 use Validator;
 use Larrock\ComponentCatalog\Facades\LarrockCatalog;
 use Larrock\ComponentUsers\Facades\LarrockUsers;
 use Larrock\ComponentCart\Facades\LarrockCart;
+use View;
 
 class CartController extends Controller
 {
@@ -52,7 +56,7 @@ class CartController extends Controller
     public function getIndex()
     {
         if(Cart::instance('main')->count() === 0){
-            Session::push('message.danger', 'Ваша корзина пуста');
+            MessageLarrock::danger(\Lang::get('larrock::cart.empty'));
             return redirect('/');
         }
 
@@ -80,8 +84,7 @@ class CartController extends Controller
             }
         }*/
         $seo = ['title' => 'Корзина товаров. Оформление заявки'];
-
-        return view(config('larrock.views.cart.getIndex', 'larrock::front.cart.table'), compact('cart', 'seo', 'discount', 'discount_motivate' , ['cart', 'seo', 'discount', 'discount_motivate']));
+        return view(config('larrock.views.cart.getIndex', 'larrock::front.cart.table'), ['cart' => $cart, 'seo' => $seo]);
     }
 
     /**
@@ -102,7 +105,6 @@ class CartController extends Controller
         if( !$this->user && !$this->withoutRegistry){
             $this->user = $this->login($request);
         }
-
         return $this->saveOrder($request);
     }
 
@@ -113,7 +115,6 @@ class CartController extends Controller
     protected function validOrder(Request $request)
     {
         $validate_rules = $this->config->getValid();
-
         if($this->withoutRegistry) {
             unset($validate_rules['email'], $validate_rules['password']);
         }
@@ -157,21 +158,17 @@ class CartController extends Controller
             $user = $request->all();
             $user['role'] = 3;
             Validator::make($user, LarrockUsers::getValid())->validate();
-
             event(new Registered($user = $this->createUser($request->all())));
-
             $this->guard()->login($user);
-
             return $this->guard()->user();
         }
-
         return NULL;
     }
 
     /**
      * Create a new user instance after a valid registration.
      * @param  array  $data
-     * @return User
+     * @return User|Model
      */
     protected function createUser(array $data)
     {
@@ -228,8 +225,9 @@ class CartController extends Controller
         $order->order_id = ++$order_id;
 
         if($this->changeTovarStatus($order['items']) && $create_order = $order->save()){
-            $this->mailFullOrder($order);
-            Session::push('message.success', 'Ваш заказ #'. $order->order_id .' успешно добавлен');
+            $cartMail = new CartMail();
+            $cartMail->mailOrder($request, $order, 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME') .' успешно создан');
+            MessageLarrock::success(\Lang::get('larrock::cart.order_create', ['number' => $order->order_id]));
             Cart::instance('main')->destroy();
 
             if( !$this->withoutRegistry){
@@ -237,37 +235,8 @@ class CartController extends Controller
             }
             return redirect()->to('/');
         }
-        Session::push('message.danger', 'Не удалось оформить заказ');
+        MessageLarrock::danger(\Lang::get('larrock::cart.order_create_fail'));
         return back()->withInput();
-    }
-
-    /**
-     * Отправка email'а о новом заказе
-     * @param         $order
-     */
-    public function mailFullOrder($order)
-    {
-        \Log::info('NEW ORDER #'. $order->order_id .'. Order: '. json_encode($order));
-
-        $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
-        if( !empty($order->email)){
-            $mails[] = $order->email;
-        }
-        $mails = array_unique($mails);
-
-        $subject = 'Заказ #'. $order->order_id .' на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST')) .' успешно оформлен';
-        /** @noinspection PhpVoidFunctionResultUsedInspection */
-        Mail::send(config('larrock.views.cart.emailOrderFull', 'larrock::emails.orderFull'),
-            ['data' => $order->toArray(), 'subject' => $subject],
-            function($message) use ($mails, $subject){
-                $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
-                $message->to($mails);
-                $message->subject($subject);
-            });
-
-        if( !empty($order->email)){
-            Session::push('message.success', 'На Ваш email отправлено письмо с деталями заказа');
-        }
     }
 
     /**
@@ -284,17 +253,16 @@ class CartController extends Controller
                 $data->nalichie -= $item->qty; //Остаток товара
                 $data->sales += $item->qty; //Количество продаж
                 if($data->save()){
-                    Session::push('message.success', 'Товар для вас зарезервирован');
+                    MessageLarrock::success(\Lang::get('larrock::cart.tovar.reserved'));
                 }else{
-                    Session::push('message.danger', 'Не удалось зарезервировать товар под ваш заказ');
+                    MessageLarrock::danger(\Lang::get('larrock::cart.tovar.reserved_fail'));
                 }
             }else{
                 //Товара больше нет в продаже, откатываем заказ
                 $ok = NULL;
                 Cart::instance('main')->remove($item->rowId);
-                Session::push('message.danger', 'Товара '. $item->name .' из вашей корзины больше нет в нашем каталоге');
-                Session::push('message.danger', 'Мы обновили вашу корзину удалив '. $item->name);
-
+                MessageLarrock::danger(\Lang::get('larrock::cart.tovar.lost', ['name' => $item->name]));
+                MessageLarrock::danger(\Lang::get('larrock::cart.tovar.lost_change_cart', ['name' => $item->name]));
             }
         }
         return $ok;
@@ -302,7 +270,7 @@ class CartController extends Controller
 
     /**
      * Отправка письма о регистрации
-     * @param array    $user
+     * @param Model    $user
      */
     public function mailRegistry($user)
     {
@@ -313,6 +281,7 @@ class CartController extends Controller
             $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
         }
         $mails[] = $user->email;
+        $mails = array_unique($mails);
 
         /** @noinspection PhpVoidFunctionResultUsedInspection */
         Mail::send('larrock::emails.register', ['data' => $user],
@@ -322,8 +291,7 @@ class CartController extends Controller
                 $message->subject('Вы успешно зарегистрировались на сайте '. env('SITE_NAME', array_get($_SERVER, 'HTTP_HOST'))
                 );
             });
-
-        Session::push('message.success', 'На Ваш email отправлено письмо с регистрационными данными');
+        MessageLarrock::success('На Ваш email отправлено письмо с регистрационными данными');
     }
 
     /**
@@ -331,6 +299,7 @@ class CartController extends Controller
      * @param Request $request
      * @see https://github.com/Crinsane/LaravelShoppingcart
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Symfony\Component\HttpFoundation\Response
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
     public function cartAdd(Request $request)
     {
@@ -339,7 +308,7 @@ class CartController extends Controller
         //Модификации товаров
         $costValueId = $request->get('costValueId');
         if($costValueId && (int)$costValueId > 0){
-            $costValue = Link::whereId($costValueId)->first();
+            $costValue = Link::whereId($costValueId)->firstOrFail();
             $get_tovar->cost = $costValue->cost;
         }
 
@@ -353,8 +322,8 @@ class CartController extends Controller
             $options = (array) json_decode($options);
         }
         if($costValueId && (int)$costValueId > 0){
-            $link = Link::whereId($costValueId)->first();
-            if($searchParam = $link->model_child::whereId($link->id_child)->first()){
+            $link = Link::whereId($costValueId)->firstOrFail();
+            if($searchParam = $link->model_child::whereId($link->id_child)->firstOrFail()){
                 $searchParam['className'] = $link->model_child;
                 $options['costValue'] = $searchParam->toArray();
             }
@@ -392,7 +361,6 @@ class CartController extends Controller
             $total = $discounts->total;
             $profit = $discounts->profit;
         }
-
         return response()->json(['status' => 'success', 'message' => 'Товар добавлен в корзину', 'count' => $count, 'total' => $total, 'profit' => $profit]);
     }
 
@@ -492,17 +460,22 @@ class CartController extends Controller
 
     /**
      * Удаление заказа
+     * @param Request $request
      * @param $id
      * @return $this
+     * @throws \Exception
      */
-    public function removeOrder($id)
+    public function removeOrder(Request $request, $id)
     {
         $order = LarrockCart::getModel()->find($id);
         if($order->delete()){
             $this->changeTovarStatus($order->items);
-            Session::push('message.danger', 'Заказ успешно отменен');
+            $order->status_order = 'Удален';
+            $cartMail = new CartMail();
+            $cartMail->mailOrder($request, $order);
+            MessageLarrock::success(\Lang::get('larrock::cart.cancel', ['number' => $id]));
         }else{
-            Session::push('message.danger', 'Произошла ошибка во время отмены заказа');
+            MessageLarrock::danger(\Lang::get('larrock::cart.cancel_fail', ['number' => $id]));
         }
         return back()->withInput();
     }
