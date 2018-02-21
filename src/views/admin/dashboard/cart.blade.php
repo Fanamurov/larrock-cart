@@ -10,7 +10,7 @@
                             {{ $value->cost_discount }} руб.
                         @else
                             @if($value->cost > 0)
-                                {{ $value->cost }} руб.
+                                {{ $value->cost + $data->cost_delivery }} руб.
                             @else
                                 догов.
                             @endif

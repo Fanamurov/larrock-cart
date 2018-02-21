@@ -8,7 +8,7 @@
                 <div class="@if($data->cost > 0) text-order-pay @endif">
                     @if($data->status_pay !== 'Оплачено')
                         @if($data->cost > 0)
-                            <span class="uk-align-left">Всего к оплате: <strong class="total">{{ $data->cost }}</strong> руб.</span>
+                            <span class="uk-align-left">Всего к оплате: <strong class="total">{{ $data->cost + $data->cost_delivery }}</strong> руб.</span>
                         @else
                             <span class="uk-align-left">К оплате по договорной цене</span>
                         @endif
@@ -24,7 +24,7 @@
                             @endif
                         @endif
                     @else
-                        <span class="success-pay">Оплачено {{ $data->cost }} руб.</span>
+                        <span class="success-pay">Оплачено {{ $data->cost + $data->cost_delivery }} руб.</span>
                         @if( !empty($data->invoiceId) && isset($data->payment_data->status))
                             @include('larrock::admin.cart.payment-data')
                         @endif

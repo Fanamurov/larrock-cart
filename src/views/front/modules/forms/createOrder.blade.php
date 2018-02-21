@@ -69,14 +69,12 @@
                 <div class="uk-form-row">
                     <label for="method_delivery" class="uk-form-label">Метод доставки:</label>
                     <select name="method_delivery" id="delivery-method" class="uk-width-1-1 uk-form-large">
-                        @foreach($app->rows['method_delivery']->options as $value)
-                            <option @if(old('method_delivery') === $value) selected @endif value="{{ $value }}">{{ $value }}</option>
+                        @foreach($app->rows['method_delivery']->options as $key => $value)
+                            <option @if(old('method_delivery') === $key) selected @endif value="{{ $key }}" data-cost="{{ $value }}">{{ $key }}</option>
                         @endforeach
                     </select>
                 </div>
-            @endif
-
-            @if(isset($app->rows['method_pay']))
+                <input type="hidden" name="cost_delivery" value="0">
                 <div class="uk-form-row row-address" style="display: none;">
                     <label for="address" class="uk-form-label">Адрес доставки:</label>
                     <textarea name="address" id="address" class="uk-width-1-1" placeholder="Укажите город, улицу, дом, номер квартиры/офиса" required>@if(Auth::guard()->check() && empty(old('address'))){{ Auth::guard()->user()->address }}@else {{ old('address') }} @endif</textarea>
@@ -88,7 +86,7 @@
                     <label for="method_pay" class="uk-form-label">Метод оплаты:</label>
                     <select name="method_pay" id="pay-method" class="uk-width-1-1 uk-form-large">
                         @foreach($app->rows['method_pay']->options as $value)
-                            <option @if(old('method_pay') === $value) selected @endif value="{{ $value }}">{{ $value }}</option>
+                            <option @if(old('method_delivery') === $value) selected @endif value="{{ $value }}" data-cost="{{ $value }}">{{ $value }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -112,11 +110,19 @@
 @push('scripts')
     <script>
         var method_delivery = $('select[name=method_delivery] option:selected').val();
+        var cost_delivery = parseFloat($('select[name=method_delivery] option:selected').attr('data-cost'));
+        var cost_tovar = parseFloat($('.total').html());
+
+        $('.delivery_total').html(cost_delivery);
+        $('input[name=cost_delivery]').val(cost_delivery);
+        $('.total').html(cost_delivery + cost_tovar);
+
         if(method_delivery === 'самовывоз'){
             $('.row-address').slideUp('slow')
         }else{
             $('.row-address').slideDown('slow')
         }
+
         $('select[name=method_delivery]').change(function () {
             var method_delivery = $('select[name=method_delivery] option:selected').val();
             if(method_delivery === 'самовывоз'){
@@ -124,6 +130,12 @@
             }else{
                 $('.row-address').slideDown('slow')
             }
+            cost_delivery = parseFloat($('select[name=method_delivery] option:selected').attr('data-cost'));
+            cost_tovar = parseFloat($('.total').html());
+
+            $('.delivery_total').html(cost_delivery);
+            $('.total').html(cost_delivery + cost_tovar);
+            $('input[name=cost_delivery]').val(cost_delivery);
         });
 
         $('input[name=without_registry]').change(function(){

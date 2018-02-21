@@ -109,7 +109,7 @@
         @endforeach
         @if($data['cost'] > 0)
             <tr>
-                <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;text-align: right" colspan="5"><strong>Итого к оплате: {!! $data['cost'] !!} руб.</strong></td>
+                <td style="border: #bcbcbc 1px solid;font:14px/16px Calibri,Helvetica,Arial,sans-serif;text-align: right" colspan="5"><strong>Итого к оплате: {!! $data['cost'] + $data['cost_delivery'] !!} руб.</strong></td>
             </tr>
             @if(isset($data->discount->profit))
                 <tr>
@@ -135,10 +135,17 @@
             <tr>
                 <td style="border: #bcbcbc 1px solid;font:20px/26px Calibri,Helvetica,Arial,sans-serif;text-align: right" colspan="5">
                     @if($data['cost'] > 0)
-                        <strong>Всего к оплате: {!! $data['cost'] !!} руб.</strong>
+                        <strong>Всего к оплате: {!! $data['cost'] + $data['cost_delivery'] !!} руб.</strong>
                     @else
                         <strong>Всего к оплате: по договоренности</strong>
                     @endif
+                </td>
+            </tr>
+        @endif
+        @if($data['cost_delivery'] > 0)
+            <tr>
+                <td style="border: #bcbcbc 1px solid;font:20px/26px Calibri,Helvetica,Arial,sans-serif;text-align: right" colspan="5">
+                    <strong>Стоимость доставки (включено в общую сумму): {!! $data['cost_delivery'] !!} руб.</strong>
                 </td>
             </tr>
         @endif

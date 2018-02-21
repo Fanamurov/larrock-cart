@@ -30,8 +30,12 @@
                         <label class="uk-form-label" for="{{$row->name}}{{ $data->order_id }}">{{ $row->title }}:</label>
                         @if(get_class($row) === 'Larrock\Core\Helpers\FormBuilder\FormSelect')
                             <select name="{{ $row->name }}" id="{{$row->name}}{{ $data->order_id }}" class="uk-width-1-1">
-                                @foreach($row->options as $value)
-                                    <option value="{{ $value }}" @if($data->{$row->name} === $value) selected @endif>{{ $value }}</option>
+                                @foreach($row->options as $key => $value)
+                                    @if($row->name === 'method_delivery')
+                                        <option value="{{ $key }}" @if($data->{$row->name} === $key) selected @endif>{{ $key }}</option>
+                                    @else
+                                        <option value="{{ $value }}" @if($data->{$row->name} === $value) selected @endif>{{ $value }}</option>
+                                    @endif
                                 @endforeach
                             </select>
                         @elseif(get_class($row) === 'Larrock\Core\Helpers\FormBuilder\FormTextarea')

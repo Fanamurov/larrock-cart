@@ -44,7 +44,9 @@ class CartComponent extends Component
         $row = new FormSelect('method_delivery', 'Метод доставки');
         $this->rows['method_delivery'] = $row->setValid('max:255')
             ->setDefaultValue('самовывоз')
-            ->setOptions(['самовывоз', 'курьером (в черте Хабаровска)', 'доставка по России'])->setTemplateAdmin('status')->setFillable();
+            ->setOptions(['самовывоз' => 0,
+                'курьером (в черте города)' => 300,
+                'доставка по России' => 700])->setTemplateAdmin('status')->setFillable();
 
         $row = new FormHidden('user', 'ID покупателя');
         $this->rows['user'] = $row->setFillable()->setTemplateAdmin('user_info');
@@ -72,6 +74,10 @@ class CartComponent extends Component
 
         $row = new FormTextarea('comment_admin', 'Комментарий продавца');
         $this->rows['comment_admin'] = $row->setFillable()->setTemplateAdmin('status');
+
+        $row = new FormInput('cost_delivery', 'Стоимость доставки');
+        $this->rows['cost_delivery'] = $row->setFillable()
+            ->setCssClassGroup('uk-width-1-1 uk-width-small-1-2 uk-width-medium-1-3 uk-width-large-1-4');
 
         return $this;
     }

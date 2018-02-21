@@ -13,6 +13,7 @@ class CartMail
      * @param Request $request
      * @param $order
      * @param null $subject
+     * @throws \Exception
      */
     public function mailOrder(Request $request, $order, $subject = NULL)
     {
@@ -28,7 +29,7 @@ class CartMail
                 .' '. $order->status_order . ' '. $order->status_pay;
         }
         /** @noinspection PhpVoidFunctionResultUsedInspection */
-        Mail::send('larrock::emails.orderFull-delete', ['data' => $order->toArray(), 'subject' => $subject],
+        Mail::send('larrock::emails.orderFull', ['data' => $order->toArray(), 'subject' => $subject],
             function($message) use ($mails, $subject){
                 $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
                 $message->to($mails);

@@ -57,7 +57,10 @@
         </div>
     @endforeach
 </div>
-<div class="uk-form-row totalcost-row uk-h2 uk-margin-top">Итого: {{ $data->cost }} рублей</div>
+<div class="uk-form-row totalcost-row uk-h2 uk-margin-top">Итого: {{ $data->cost + $data->cost_delivery }} рублей</div>
+@if($data->cost_delivery > 0)
+    <div>Где {{ $data->cost_delivery }} рублей - стоимость доставки</div>
+@endif
 @if(isset($data->discount->profit))
     <div class="uk-alert">
         <p>Скидка: {!! $data->discount->profit !!} руб.<br/>
@@ -75,7 +78,7 @@
         </p>
     </div>
 @endif
-<div class="uk-form-row uk-form">
+<div class="uk-form-row uk-form uk-margin-top">
     <select class="add_to_cart uk-width-1-1" data-order_id="{{ $data->id }}">
         <option>--- Добавить к заказу ---</option>
         @foreach($catalog as $catalog_item)

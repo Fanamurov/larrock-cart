@@ -87,6 +87,11 @@
                     <td class="uk-hidden-small uk-text-right"><button type="button" class="removeCartItem uk-button uk-button-danger uk-button-small" data-rowid="{{ $row->rowId }}">Удалить</button></td>
                 </tr>
             @endforeach
+            <tr>
+                <td colspan="6">
+                    <p class="uk-text-right row-total-delivery">Доставка: <strong class="delivery_total">0</strong> руб.</p>
+                </td>
+            </tr>
             <tr class="total-row">
                 <td colspan="6">
                     @if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount'))
