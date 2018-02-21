@@ -201,6 +201,13 @@ class AdminCartController extends Controller
         $order = LarrockCart::getModel();
         $order->fill($request->all());
 
+        $order->cost_delivery = 0;
+        foreach ($this->config->rows['method_delivery']->options as $key => $option){
+            if($key === $order->method_delivery){
+                $order->cost_delivery = $option;
+            }
+        }
+
         if( !empty($request->get('user_id'))){
             $order->user = $request->get('user_id');
         }
@@ -238,6 +245,7 @@ class AdminCartController extends Controller
      * Удаление конкретного товара из заказа
      * @param Request $request
      * @return $this|\Illuminate\Http\RedirectResponse
+     * @throws \Exception
      */
 	public function removeItem(Request $request)
 	{
@@ -265,7 +273,7 @@ class AdminCartController extends Controller
      * @param  \Illuminate\Http\Request $request
      * @param  int $id
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response
-     * @throws \Illuminate\Database\Eloquent\MassAssignmentException
+     * @throws \Exception
      */
 	public function update(Request $request, $id)
 	{
@@ -290,6 +298,13 @@ class AdminCartController extends Controller
 		$data->fill($request->all());
         $data->user = $request->user()->id;
 
+        $data->cost_delivery = 0;
+        foreach ($this->config->rows['method_delivery']->options as $key => $option){
+            if($key === $data->method_delivery){
+                $data->cost_delivery = $option;
+            }
+        }
+
 		if($data->save()){
 			if($need_mailIt){
                 $cartMail = new CartMail();
@@ -307,7 +322,7 @@ class AdminCartController extends Controller
      * Добавление товара в уже существующий заказ
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws \Exception
      */
     public function cartAdd(Request $request)
     {
@@ -386,11 +401,12 @@ class AdminCartController extends Controller
         return back();
     }
 
-	/**
-	 * Изменение количества товара в заказе
-	 * @param Request $request
-	 * @param         $id
-	 * @return AdminCartController|\Illuminate\Http\RedirectResponse
+    /**
+     * Изменение количества товара в заказе
+     * @param Request $request
+     * @param         $id
+     * @return AdminCartController|\Illuminate\Http\RedirectResponse
+     * @throws \Exception
      */
 	public function editQtyItem(Request $request, $id)
 	{
@@ -458,6 +474,7 @@ class AdminCartController extends Controller
      * Отправка письма покупателю
      * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
+     * @throws \Exception
      */
 	public function sendNotify(Request $request)
     {

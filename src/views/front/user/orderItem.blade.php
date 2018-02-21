@@ -56,7 +56,7 @@
                     <p class="uk-text-muted">Метод оплаты: {{ $data->method_pay }}</p>
                 @endif
                 @if(isset($config_cart->rows['method_delivery']))
-                    <p class="uk-text-muted">Метод доставки: {{ $data->method_delivery }}</p>
+                    <p class="uk-text-muted">Метод доставки: {{ $data->method_delivery }} - {{ $data->cost_delivery }} рублей</p>
                 @endif
                 <p class="uk-text-muted">
                     {{ $data->fio}},
