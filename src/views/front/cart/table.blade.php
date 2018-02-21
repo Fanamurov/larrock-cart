@@ -95,13 +95,14 @@
             <tr class="total-row">
                 <td colspan="6">
                     @if(file_exists(base_path(). '/vendor/fanamurov/larrock-discount'))
-                        <p class="uk-text-right row-total">Всего к оплате: <strong class="total">{!! $discountsShare->total !!}</strong> руб.</p>
+                        <p class="uk-text-right row-total" data-clear-total="{!! $discountsShare->total !!}">Всего к оплате: <strong class="total">{!! $discountsShare->total !!}</strong> руб.</p>
                         @if($discountsShare->profit > 0)
                             <p class="uk-text-right row-clear-total">Сумма заказа: <del><strong class="clear-total">{!! $discountsShare->clear_total !!}</strong> руб.</del></p>
                             <p class="uk-text-right row-total-discount">Ваша скидка: <strong class="total-discount">{{ $discountsShare->profit }}</strong> руб.</p>
                         @endif
                     @else
-                        <p class="uk-text-right row-total">Всего к оплате: <strong class="total">{!! Cart::instance('main')->total() !!}</strong> руб.</p>
+                        <p class="uk-text-right row-total" data-clear-total="{!! Cart::instance('main')->total() !!}">
+                            Всего к оплате: <strong class="total">{!! Cart::instance('main')->total() !!}</strong> руб.</p>
                     @endif
                 </td>
             </tr>

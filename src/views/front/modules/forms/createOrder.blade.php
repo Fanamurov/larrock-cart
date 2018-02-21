@@ -100,6 +100,7 @@
             {{ csrf_field() }}
             <div class="uk-form-row">
                 <button type="submit" class="uk-button uk-button-primary uk-button-large uk-width-1-1" name="submit_orderFull">Оформить заказ</button>
+                <div class="repeat-total uk-text-right uk-margin-top">К оплате: <span class="repeat-total-cost"></span> рублей</div>
             </div>
         </div>
     </div>
@@ -111,7 +112,7 @@
     <script>
         var method_delivery = $('select[name=method_delivery] option:selected').val();
         var cost_delivery = parseFloat($('select[name=method_delivery] option:selected').attr('data-cost'));
-        var cost_tovar = parseFloat($('.total').html());
+        var cost_tovar = parseFloat($('.row-total').attr('data-clear-total'));
 
         $('.delivery_total').html(cost_delivery);
         $('input[name=cost_delivery]').val(cost_delivery);
@@ -131,7 +132,7 @@
                 $('.row-address').slideDown('slow')
             }
             cost_delivery = parseFloat($('select[name=method_delivery] option:selected').attr('data-cost'));
-            cost_tovar = parseFloat($('.total').html());
+            cost_tovar = parseFloat($('.row-total').attr('data-clear-total'));
 
             $('.delivery_total').html(cost_delivery);
             $('.total').html(cost_delivery + cost_tovar);
