@@ -3,11 +3,11 @@
 namespace Larrock\ComponentCart\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Larrock\ComponentCatalog\Facades\LarrockCatalog;
-use Larrock\ComponentUsers\Facades\LarrockUsers;
+use LarrockCatalog;
+use LarrockUsers;
 use Larrock\Core\Traits\GetLink;
 use Nicolaslopezj\Searchable\SearchableTrait;
-use Larrock\ComponentCart\Facades\LarrockCart;
+use LarrockCart;
 use Larrock\Core\Component;
 
 /**
@@ -61,6 +61,8 @@ use Larrock\Core\Component;
  * @method static \Illuminate\Database\Query\Builder|\Larrock\ComponentCart\Models\Cart whereInvoiceId($value)
  * @method static \Illuminate\Database\Query\Builder|\Larrock\ComponentCart\Models\Cart whereDiscountId($value)
  * @property \Illuminate\Support\Collection $discount
+ * @property mixed $payment_data
+ * @property mixed $get_user
  * @method static \Illuminate\Database\Query\Builder|\Larrock\ComponentCart\Models\Cart whereDiscount($value)
  */
 class Cart extends Model
@@ -106,7 +108,7 @@ class Cart extends Model
 	public function getItemsAttribute($value)
 	{
 		$items = json_decode($value);
-		if(is_array($items) || is_object($items)){
+		if(\is_array($items) || \is_object($items)){
 			foreach($items as $item_key => $item_value){
 				$items->{$item_key}->catalog = LarrockCatalog::getModel()->whereId($item_value->id)->with(['getImages'])->first();
 			}

@@ -12,7 +12,7 @@
             <div class="uk-form">
                 <select name="tovar[]" id="tovar"></select>
             </div>
-            <div class="uk-grid" id="tovars_container"></div>
+            <div class="uk-grid uk-child-width-1-2@s uk-child-width-1-4@m uk-grid-match" id="tovars_container"></div>
         </div>
 
         <div class="ibox-content">

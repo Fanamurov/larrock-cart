@@ -18,10 +18,10 @@
     },
     "require": {
         "gloudemans/shoppingcart": "^2.3",
-        "fanamurov/larrock-core": "^0.3",
-        "fanamurov/larrock-catalog": "^0.3",
-        "fanamurov/larrock-category": "^0.3",
-        "fanamurov/larrock-users": "^0.3"
+        "fanamurov/larrock-core": "^1.0",
+        "fanamurov/larrock-catalog": "^1.0",
+        "fanamurov/larrock-category": "^1.0",
+        "fanamurov/larrock-users": "^1.0"
     },
     "extra": {
         "laravel": {

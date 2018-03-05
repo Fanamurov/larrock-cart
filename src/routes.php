@@ -7,7 +7,6 @@ Route::post('/user/removeOrder/{id}', 'Larrock\ComponentCart\CartController@remo
 Route::post('/ajax/cartAdd', 'Larrock\ComponentCart\CartController@cartAdd')->name('cart.add');
 Route::post('/ajax/cartRemove', 'Larrock\ComponentCart\CartController@cartRemove')->name('cart.remove');
 Route::post('/ajax/cartQty', 'Larrock\ComponentCart\CartController@cartQty')->name('cart.qty');
-Route::any('/ajax/getTovar', 'Larrock\ComponentCart\CartController@getTovar')->name('cart.get.tovar');
 
 Route::group(['prefix' => 'admin'], function(){
     Route::delete('/cart/removeItem', 'Larrock\ComponentCart\AdminCartController@removeItem')->name('cart.removeItem');
@@ -20,6 +19,7 @@ Route::group(['prefix' => 'admin'], function(){
     Route::post('/cart/getTovarForCreate', 'Larrock\ComponentCart\AdminCartController@getTovarForCreate')->name('cart.getTovarForCreate');
     Route::post('/cart/createOrder', 'Larrock\ComponentCart\AdminCartController@createOrder')->name('cart.createOrder');
     Route::post('/cart/sendNotify', 'Larrock\ComponentCart\AdminCartController@sendNotify')->name('cart.sendNotify');
+    Route::any('/cart/getTovar', 'Larrock\ComponentCart\AdminCartController@getTovar')->name('admin.cart.get.tovar');
 });
 
 Breadcrumbs::register('admin.'. LarrockCart::getName() .'.index', function($breadcrumbs){

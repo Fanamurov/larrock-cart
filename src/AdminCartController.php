@@ -46,7 +46,7 @@ class AdminCartController extends Controller
         }
 
         $cache_key = sha1('catalogItemsAll');
-        $data['catalog'] = Cache::remember($cache_key, 1140, function () {
+        $data['catalog'] = Cache::rememberForever($cache_key, function () {
             return LarrockCatalog::getModel()->whereActive(1)->get(['id', 'title', 'cost', 'what']);
         });
 
@@ -67,7 +67,7 @@ class AdminCartController extends Controller
         /** @var \Larrock\ComponentCart\Models\Cart $query */
         $query = LarrockCart::getModel()->with(['get_user']);
 
-        if( !empty($request->get('order_id'))){
+        if($request->get('order_id', 'Любой') !== 'Любой'){
             $query->where('order_id', '=', $request->get('order_id'));
         }
         if( !empty($request->get('date_start'))){
@@ -76,10 +76,10 @@ class AdminCartController extends Controller
         if( !empty($request->get('date_end'))){
             $query->where('created_at', '<=', $request->get('date_end'));
         }
-        if( !empty($request->get('status_order'))){
+        if($request->get('status_order', 'Любой') !== 'Любой'){
             $query->whereStatusOrder($request->get('status_order'));
         }
-        if( !empty($request->get('status_pay'))){
+        if($request->get('status_pay', 'Любой') !== 'Любой'){
             $query->whereStatusPay($request->get('status_pay'));
         }
 
@@ -109,7 +109,7 @@ class AdminCartController extends Controller
 	public function create(Request $request)
 	{
         $cache_key = sha1('catalogItemsAll');
-        $data['catalog'] = Cache::remember($cache_key, 1140, function () {
+        $data['catalog'] = Cache::rememberForever($cache_key, function () {
             return LarrockCatalog::getModel()->whereActive(1)->get(['id', 'title', 'cost', 'what']);
         });
 
@@ -257,7 +257,7 @@ class AdminCartController extends Controller
             $order->items = $items->forget($request->get('id'));
             if($order->save()){
                 MessageLarrock::success(\Lang::get('larrock::cart.admin.order_change', ['number' => $order->order_id]));
-                \Cache::flush();
+                Cache::flush();
                 return back();
             }
         }else{
@@ -311,7 +311,7 @@ class AdminCartController extends Controller
                 $cartMail->mailOrder($request, $data, $subject);
 			}
             MessageLarrock::success(\Lang::get('larrock::cart.admin.order_change', ['number' => $data->order_id]));
-			\Cache::flush();
+			Cache::flush();
 			return back();
 		}
         MessageLarrock::danger(\Lang::get('larrock::cart.admin.order_not_change', ['number' => $data->order_id]));
@@ -329,11 +329,17 @@ class AdminCartController extends Controller
         \Cart::instance('temp')->destroy();
         if( !$order = LarrockCart::getModel()->whereOrderId($request->get('order_id'))->first()){
             MessageLarrock::danger(\Lang::get('larrock::cart.admin.404', ['number' => $request->get('order_id')]));
+            if($request->get('ajax') === 'true'){
+                throw new \Exception(\Lang::get('larrock::cart.admin.404', ['number' => $request->get('order_id')]), 403);
+            }
             return back();
         }
 
         if( !$get_tovar = LarrockCatalog::getModel()->whereId($request->get('id'))->first()){
             MessageLarrock::danger(\Lang::get('larrock::cart.admin.404_tovar', ['number' => $request->get('id')]));
+            if($request->get('ajax') === 'true'){
+                throw new \Exception(\Lang::get('larrock::cart.admin.404_tovar', ['number' => $request->get('order_id')]), 403);
+            }
             return back();
         }
 
@@ -391,12 +397,38 @@ class AdminCartController extends Controller
         }
 
         $order->items = \Cart::instance('temp')->content();
-        \Cart::instance('temp')->destroy();
 
+        $order->cost = \Cart::instance('temp')->total();
+
+        $discountHelper = new DiscountHelper();
+        $discounts = $discountHelper->check(\Cart::instance('temp')->total(null, null, ''));
+
+
+        $order->cost = $discounts->clear_total;
+        $order->cost_discount = $discounts->total;
+
+        \Cart::instance('temp')->destroy();
         if($order->save()){
-            MessageLarrock::success(\Lang::get('larrock::cart.admin.tovar_add', ['name' => $get_tovar->title]));
+            Cache::flush();
+            if($request->get('ajax') !== 'true'){
+                MessageLarrock::success(\Lang::get('larrock::cart.admin.tovar_add', ['name' => $get_tovar->title]));
+            }
         }else{
-            MessageLarrock::danger(\Lang::get('larrock::cart.admin.tovar_add_fail'));
+            if($request->get('ajax') !== 'true'){
+                MessageLarrock::danger(\Lang::get('larrock::cart.admin.tovar_add_fail'));
+            }
+        }
+
+        if($request->get('in_template', 'true') === 'true'){
+            $cache_key = sha1('catalogItemsAll');
+            $catalog = Cache::rememberForever($cache_key, function () {
+                return LarrockCatalog::getModel()->whereActive(1)->get(['id', 'title', 'cost', 'what']);
+            });
+            return view('larrock::admin.cart.order-item-tovars-table', ['data' => $order, 'catalog' => $catalog]);
+        }
+
+        if($request->get('ajax') === 'true'){
+            return response()->json(['message' => \Lang::get('larrock::cart.admin.tovar_add', ['name' => $get_tovar->title])]);
         }
         return back();
     }
@@ -437,7 +469,7 @@ class AdminCartController extends Controller
 			}
 
             MessageLarrock::success(\Lang::get('larrock::cart.admin.order_change', ['number' => $order->order_id]));
-			\Cache::flush();
+			Cache::flush();
 			return back();
 		}
         MessageLarrock::danger(\Lang::get('larrock::cart.admin.order_not_change', ['number' => $order->order_id]));
@@ -463,7 +495,7 @@ class AdminCartController extends Controller
             $cartMail = new CartMail();
             $cartMail->mailOrder($request, $data);
 			MessageLarrock::success(\Lang::get('larrock::cart.delete', ['number' => $id]));
-			\Cache::flush();
+			Cache::flush();
 		}else{
             MessageLarrock::danger(\Lang::get('larrock::cart.delete_fail', ['number' => $id]));
 		}
@@ -485,5 +517,33 @@ class AdminCartController extends Controller
             MessageLarrock::danger(\Lang::get('larrock.cart.404', ['number' => $request->get('order_id')]));
         }
         return back();
+    }
+
+    /**
+     * Ajax
+     * @param Request $request
+     * @return View|Response
+     */
+    public function getTovar(Request $request)
+    {
+        if($get_tovar = LarrockCatalog::getModel()->whereActive(1)->whereId($request->get('id'))->with(['get_category'])->first()){
+            $check_active_category = NULL;
+            foreach ($get_tovar->get_category as $item_category){
+                foreach ($item_category->parent_tree_active as $category){
+                    if($category->active === 1 && $category->level === 1){
+                        $check_active_category = TRUE;
+                    }
+                }
+            }
+            if( !$check_active_category){
+                return response('Товар находится в неопубликованном разделе', 404);
+            }
+            if($request->get('in_template', 'true') === 'true'){
+                return view(config('larrock.views.catalog.modal', 'larrock::admin.cart.tovarItem'),
+                    ['item' => $get_tovar, 'app' => new CatalogComponent()]);
+            }
+            return response()->json($get_tovar);
+        }
+        return response('Товар не найден', 404);
     }
 }

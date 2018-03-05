@@ -9,7 +9,8 @@ use Larrock\Core\Helpers\FormBuilder\FormInput;
 use Larrock\Core\Helpers\FormBuilder\FormSelect;
 use Larrock\Core\Helpers\FormBuilder\FormTextarea;
 use Larrock\ComponentCart\Models\Cart;
-use Larrock\ComponentCart\Facades\LarrockCart;
+use LarrockCart;
+use Cache;
 
 class CartComponent extends Component
 {
@@ -30,7 +31,8 @@ class CartComponent extends Component
 
         $row = new FormSelect('status_order', 'Статус заказа');
         $this->rows['status_order'] = $row->setValid('max:255')->setDefaultValue('Обрабатывается')
-            ->setOptions(['Обрабатывается', 'Обработано', 'Готов к выдаче', 'Отменен', 'Завершен'])->setFillable()->setTemplateAdmin('status');
+            ->setOptions(['Обрабатывается', 'Обработано', 'Готов к выдаче', 'Отменен', 'Завершен'])
+            ->setFillable()->setTemplateAdmin('status');
 
         $row = new FormSelect('status_pay', 'Статус оплаты');
         $this->rows['status_pay'] = $row->setValid('max:255')->setDefaultValue('Не оплачено')
@@ -39,7 +41,8 @@ class CartComponent extends Component
         $row = new FormSelect('method_pay', 'Метод оплаты');
         $this->rows['method_pay'] = $row->setValid('max:255')
             ->setDefaultValue('наличными')
-            ->setOptions(['наличными', 'Visa, Mastercard (через сервис Яндекс.Касса)'])->setTemplateAdmin('status')->setFillable();
+            ->setOptions(['наличными', 'Visa, Mastercard (через сервис Яндекс.Касса)'])
+            ->setTemplateAdmin('status')->setFillable();
 
         $row = new FormSelect('method_delivery', 'Метод доставки');
         $this->rows['method_delivery'] = $row->setValid('max:255')
@@ -67,7 +70,7 @@ class CartComponent extends Component
         $this->rows['cost'] = $row->setDefaultValue(0)->setFillable();
 
         $row = new FormCatalogItems('items', 'Товары в заказе');
-        $this->rows['items'] = $row->setFillable();;
+        $this->rows['items'] = $row->setFillable();
 
         $row = new FormTextarea('comment', 'Комментарий заказчика');
         $this->rows['comment'] = $row->setFillable()->setTemplateAdmin('user_info');
@@ -77,7 +80,7 @@ class CartComponent extends Component
 
         $row = new FormInput('cost_delivery', 'Стоимость доставки');
         $this->rows['cost_delivery'] = $row->setFillable()
-            ->setCssClassGroup('uk-width-1-1 uk-width-small-1-2 uk-width-medium-1-3 uk-width-large-1-4');
+            ->setCssClassGroup('uk-width-1-1 uk-width-1-2@m');
 
         return $this;
     }
@@ -89,13 +92,17 @@ class CartComponent extends Component
         });
 
         $count_new = \Cache::remember('count-new-data-admin-'. LarrockCart::getName(), 1440, function(){
-            return LarrockCart::getModel()->whereStatusOrder('Обрабатывается')->count(['id']);
+            return LarrockCart::getModel()->where('status_order', '!=', 'Завершен')->where('status_order', '!=', 'Отменен')->count(['id']);
         });
-        return view('larrock::admin.sectionmenu.types.default', ['count' => $count .'/'. $count_new, 'app' => LarrockCart::getConfig(), 'url' => '/admin/'. LarrockCart::getName()]);
+        return view('larrock::admin.sectionmenu.types.default', ['count' => $count_new .'/'. $count,
+            'app' => LarrockCart::getConfig(), 'url' => '/admin/'. LarrockCart::getName()]);
     }
 
     public function toDashboard()
     {
-        return view('larrock::admin.dashboard.cart', ['component' => LarrockCart::getConfig(), 'data' => LarrockCart::getModel()->latest('created_at')->get()]);
+        $data = Cache::rememberForever('LarrockCartItemsDashboard', function(){
+            return LarrockCart::getModel()->latest('updated_at')->take(5)->get();
+        });
+        return view('larrock::admin.dashboard.cart', ['component' => LarrockCart::getConfig(), 'data' => $data]);
     }
 }

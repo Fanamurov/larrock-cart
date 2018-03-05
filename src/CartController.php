@@ -21,9 +21,9 @@ use Larrock\Core\Models\Link;
 use Mail;
 use Response;
 use Validator;
-use Larrock\ComponentCatalog\Facades\LarrockCatalog;
-use Larrock\ComponentUsers\Facades\LarrockUsers;
-use Larrock\ComponentCart\Facades\LarrockCart;
+use LarrockCatalog;
+use LarrockUsers;
+use LarrockCart;
 use View;
 
 class CartController extends Controller
@@ -52,6 +52,7 @@ class CartController extends Controller
     /**
      * Страница интерфейса корзины
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|\Illuminate\View\View
+     * @throws \Exception
      */
     public function getIndex()
     {
@@ -193,6 +194,7 @@ class CartController extends Controller
      * Сохранение заказа в БД
      * @param Request $request
      * @return $this|\Illuminate\Http\RedirectResponse
+     * @throws \Exception
      */
     protected function saveOrder(Request $request)
     {
@@ -244,6 +246,7 @@ class CartController extends Controller
      * Меняем количество товара в наличии
      * @param $cart
      * @return bool
+     * @throws \Exception
      */
     protected function changeTovarStatus($cart)
     {
@@ -337,10 +340,10 @@ class CartController extends Controller
                 return $cartItem->id === (int)$request->get('id');
             });
         }
-        if(isset($cartid[0])){
-            if((int)$get_tovar['nalichie'] > 0 && (int)$get_tovar['nalichie'] <= (int)Cart::instance('main')->get($cartid[0])->qty){
-                return response()->json(['status' => 'error', 'message' => 'У вас в корзине все доступное количество товара']);
-            }
+        if(isset($cartid[0]) &&
+            (int)$get_tovar['nalichie'] > 0 &&
+            (int)$get_tovar['nalichie'] <= (int)Cart::instance('main')->get($cartid[0])->qty){
+            return response()->json(['status' => 'error', 'message' => 'У вас в корзине все доступное количество товара']);
         }
 
         $id = $request->get('id');
@@ -361,7 +364,8 @@ class CartController extends Controller
             $total = $discounts->total;
             $profit = $discounts->profit;
         }
-        return response()->json(['status' => 'success', 'message' => 'Товар добавлен в корзину', 'count' => $count, 'total' => $total, 'profit' => $profit]);
+        return response()->json(['status' => 'success', 'message' => 'Товар добавлен в корзину', 'count' => $count,
+            'total' => $total, 'profit' => $profit]);
     }
 
     /**
@@ -423,7 +427,8 @@ class CartController extends Controller
                 $total = $discounts->total;
                 $profit = $discounts->profit;
             }
-            return response()->json(['clear_total' => Cart::instance('main')->total(), 'subtotal' => $subtotal, 'total' => $total, 'profit' => $profit]);
+            return response()->json(['clear_total' => Cart::instance('main')->total(),
+                'subtotal' => $subtotal, 'total' => $total, 'profit' => $profit]);
         }
         throw LarrockCartException::withMessage('not valid data input');
     }
@@ -478,32 +483,5 @@ class CartController extends Controller
             MessageLarrock::danger(\Lang::get('larrock::cart.cancel_fail', ['number' => $id]));
         }
         return back()->withInput();
-    }
-
-    /**
-     * Ajax
-     * @param Request $request
-     * @return View|Response
-     */
-    public function getTovar(Request $request)
-    {
-        if($get_tovar = LarrockCatalog::getModel()->whereActive(1)->whereId($request->get('id'))->with(['get_category'])->first()){
-            $check_active_category = NULL;
-            foreach ($get_tovar->get_category as $item_category){
-                foreach ($item_category->parent_tree_active as $category){
-                    if($category->active === 1 && $category->level === 1){
-                        $check_active_category = TRUE;
-                    }
-                }
-            }
-            if( !$check_active_category){
-                return response('Товар находится в неопубликованном разделе', 404);
-            }
-            if($request->get('in_template', 'true') === 'true'){
-                return view(config('larrock.views.catalog.modal', 'larrock::front.modals.addToCart'), ['data' => $get_tovar, 'app' => new CatalogComponent()]);
-            }
-            return response()->json($get_tovar);
-        }
-        return response('Товар не найден', 404);
     }
 }
