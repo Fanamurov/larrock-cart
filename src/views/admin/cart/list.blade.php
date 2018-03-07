@@ -33,3 +33,72 @@
         @endif
     @endif
 @endsection
+
+    <script type="text/javascript">
+        function AddTovalList(order_id) {
+            $('.show-add_to_cart'+ order_id).addClass('uk-hidden');
+            $('#tovar'+ order_id).removeClass('uk-hidden');
+            $('#tovar'+ order_id).selectize({
+                maxItems: 1,
+                valueField: 'id',
+                labelField: 'title',
+                searchField: 'title',
+                persist: false,
+                createOnBlur: false,
+                create: false,
+                placeholder: '-- Добавить товар к заказу --',
+                allowEmptyOption: true,
+                options: [
+                        @foreach($catalog as $value)
+                    {
+                        title: '{!! $value->title !!}',
+                        id: '{!! $value->id !!}',
+                        cost: '{!! $value->first_cost_value !!}',
+                        what: '{!! $value->what !!}'
+                    },
+                    @endforeach
+                ],
+                render: {
+                    item: function (item, escape) {
+                        return '<div>' +
+                            (item.title ? '<span class="title">' + escape(item.title.replace('&quot;', '').replace('&quot;', '')) + ' ' + item.cost + ' ' + item.what + '</span>' : '') +
+                            (item.category ? '<br/><span class="category">' + escape(item.category.replace('&quot;', '').replace('&quot;', '')) + '</span>' : '') +
+                            '</div>';
+                    },
+                    option: function (item, escape) {
+                        return '<div>' +
+                            '<span class="uk-label">' + escape(item.title.replace('&quot;', '').replace('&quot;', '')) + ' ' + item.cost + ' ' + item.what + '</span>' +
+                            (item.category ? '<br/><span class="caption">в разделе: ' + escape(item.category.replace('&quot;', '').replace('&quot;', '')) + '</span>' : '') +
+                            '</div>';
+                    }
+                },
+                onItemAdd: function (value, item) {
+                    UIkit.notification({
+                        message: 'Добавляем товар к заказу...',
+                        status: 'primary',
+                        pos: 'top-right',
+                        timeout: 5000
+                    });
+                    $.ajax({
+                        url: '/admin/ajax/cartAdd',
+                        type: 'POST',
+                        dataType: 'html',
+                        data: {
+                            id: value,
+                            order_id: order_id,
+                            ajax: 'true',
+                            in_template: 'true'
+                        },
+                        error: function () {
+                            alert('ERROR!');
+                        },
+                        success: function (res) {
+                            $('.tovars_container' + order_id).html(res);
+                            notify_show('success', 'Товар успешно добавлен к заказу');
+                        }
+                    });
+                    return false;
+                }
+            });
+        }
+    </script>

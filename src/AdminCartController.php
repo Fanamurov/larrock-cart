@@ -42,7 +42,7 @@ class AdminCartController extends Controller
 	    if($request->has('user_search')){
             $data['data'] = $this->filter($request);
         }else{
-            $data['data'] = LarrockCart::getModel()->with(['get_user'])->latest()->paginate(30);
+            $data['data'] = LarrockCart::getModel()->with(['get_user'])->latest()->paginate(15);
         }
 
         $cache_key = sha1('catalogItemsAll');

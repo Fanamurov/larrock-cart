@@ -11,7 +11,7 @@
                 @foreach($data->items as $key => $item)
                     <tr>
                         <td width="35">
-                            @if($item->catalog->first_image)
+                            @if($item->catalog && $item->catalog->first_image)
                                 <div uk-lightbox>
                                     <a href="{{ $item->catalog->first_image }}" data-caption='{{ $item->name }}'>
                                         <img class="all-width" src="{{ $item->catalog->first_image }}" alt='{{ $item->name }}'>
@@ -101,7 +101,8 @@
                 @endforeach
                 <tr>
                     <td colspan="7">
-                        <select id="tovar" class="add_to_cart uk-width-1-1" data-order_id="{{ $data->order_id }}"></select>
+                        <button type="button" class="uk-button uk-button-default show-add_to_cart{{ $data->order_id }}" onclick="AddTovalList({{ $data->order_id }});">Добавить товар к заказу</button>
+                        <select id="tovar{{ $data->order_id }}" class="add_to_cart uk-width-1-1 uk-hidden" data-order_id="{{ $data->order_id }}"></select>
                     </td>
                 </tr>
             </table>
@@ -125,70 +126,3 @@
         </div>
     </li>
 </ul>
-
-<script type="text/javascript">
-    $('#tovar').selectize({
-        maxItems: 1,
-        valueField: 'id',
-        labelField: 'title',
-        searchField: 'title',
-        persist: false,
-        createOnBlur: false,
-        create: false,
-        placeholder: '-- Добавить товар к заказу --',
-        allowEmptyOption: true,
-        options: [
-                @foreach($catalog as $value)
-            {
-                title: '{!! $value->title !!}',
-                id: '{!! $value->id !!}',
-                cost: '{!! $value->first_cost_value !!}',
-                what: '{!! $value->what !!}'
-            },
-            @endforeach
-        ],
-        render: {
-            item: function (item, escape) {
-                return '<div>' +
-                    (item.title ? '<span class="title">' + escape(item.title.replace('&quot;', '').replace('&quot;', '')) + ' ' + item.cost + ' ' + item.what + '</span>' : '') +
-                    (item.category ? '<br/><span class="category">' + escape(item.category.replace('&quot;', '').replace('&quot;', '')) + '</span>' : '') +
-                    '</div>';
-            },
-            option: function (item, escape) {
-                return '<div>' +
-                    '<span class="uk-label">' + escape(item.title.replace('&quot;', '').replace('&quot;', '')) + ' ' + item.cost + ' ' + item.what + '</span>' +
-                    (item.category ? '<br/><span class="caption">в разделе: ' + escape(item.category.replace('&quot;', '').replace('&quot;', '')) + '</span>' : '') +
-                    '</div>';
-            }
-        },
-        onItemAdd: function (value, item) {
-            UIkit.notification({
-                message: 'Добавляем товар к заказу...',
-                status: 'primary',
-                pos: 'top-right',
-                timeout: 5000
-            });
-            var id = value;
-            var order_id = '{{ $data->order_id }}';
-            $.ajax({
-                url: '/admin/ajax/cartAdd',
-                type: 'POST',
-                dataType: 'html',
-                data: {
-                    id: id,
-                    order_id: order_id,
-                    ajax: 'true',
-                    in_template: 'true'
-                },
-                error: function () {
-                    alert('ERROR!');
-                },
-                success: function (res) {
-                    $('.tovars_container' + order_id).html(res);
-                    notify_show('success', 'Товар успешно добавлен к заказу');
-                }
-            });
-            return false;
-        }
-    });
-</script>
