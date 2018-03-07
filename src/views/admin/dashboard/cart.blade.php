@@ -7,7 +7,7 @@
                     @foreach($data as $value)
                         <tr class="link_block_this" data-href="/admin/{{ $component->name }}#order{{ $value->order_id }}t">
                             <td>
-                                <h4 class="uk-margin-remove-bottom"><a href="/admin/cart?order_id={{ $value->order_id }}">Заказ #{{ $value->order_id }}</a></h4>
+                                <h4 class="uk-margin-remove-bottom"><a href="/admin/cart?order_id={{ $value->order_id }}&user_search">Заказ #{{ $value->order_id }}</a></h4>
                                 <div>{{ $value->fio or 'n/a' }}</div>
                             </td>
                             <td>
