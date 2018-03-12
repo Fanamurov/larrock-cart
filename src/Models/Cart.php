@@ -127,7 +127,7 @@ class Cart extends Model
         return json_decode($value);
     }
 
-	public function get_user()
+	public function getUser()
 	{
 		return $this->hasOne(LarrockUsers::getModelName(), 'id', 'user');
 	}

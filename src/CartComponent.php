@@ -87,11 +87,11 @@ class CartComponent extends Component
 
     public function renderAdminMenu()
     {
-        $count = \Cache::remember('count-data-admin-'. LarrockCart::getName(), 1440, function(){
+        $count = \Cache::rememberForever('count-data-admin-'. LarrockCart::getName(), function(){
             return LarrockCart::getModel()->count(['id']);
         });
 
-        $count_new = \Cache::remember('count-new-data-admin-'. LarrockCart::getName(), 1440, function(){
+        $count_new = \Cache::rememberForever('count-new-data-admin-'. LarrockCart::getName(), function(){
             return LarrockCart::getModel()->where('status_order', '!=', 'Завершен')->where('status_order', '!=', 'Отменен')->count(['id']);
         });
         return view('larrock::admin.sectionmenu.types.default', ['count' => $count_new .'/'. $count,

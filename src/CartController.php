@@ -12,19 +12,16 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Larrock\ComponentCart\Exceptions\LarrockCartException;
 use Larrock\ComponentCart\Helpers\CartMail;
-use Larrock\ComponentCatalog\CatalogComponent;
 use Larrock\ComponentDiscount\Helpers\DiscountHelper;
 use Larrock\ComponentUsers\Models\User;
 use Larrock\Core\Component;
 use Larrock\Core\Helpers\MessageLarrock;
 use Larrock\Core\Models\Link;
 use Mail;
-use Response;
 use Validator;
 use LarrockCatalog;
 use LarrockUsers;
 use LarrockCart;
-use View;
 
 class CartController extends Controller
 {
@@ -92,6 +89,8 @@ class CartController extends Controller
      * Создание заказа, Логин/регистрация пользователя при необходимости
      * @param Request $request
      * @return $this|\Illuminate\Http\RedirectResponse
+     * @throws ValidationException
+     * @throws \Exception
      */
     public function createOrder(Request $request)
     {

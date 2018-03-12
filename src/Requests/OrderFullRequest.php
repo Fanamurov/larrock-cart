@@ -3,7 +3,7 @@
 namespace Larrock\ComponentCart\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Larrock\ComponentCart\Facades\LarrockCart;
+use LarrockCart;
 
 class OrderFullRequest extends FormRequest
 {
