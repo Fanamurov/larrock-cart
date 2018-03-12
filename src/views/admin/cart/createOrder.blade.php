@@ -48,7 +48,7 @@
                 {
                     title: '{!! $value->title !!}',
                     id: '{!! $value->id !!}',
-                    category: '{!! $value->get_category()->first()->title !!}',
+                    category: '{!! $value->getCategory()->first()->title !!}',
                     cost: '{!! $value->first_cost_value !!}',
                     what: '{!! $value->what !!}'
                 },

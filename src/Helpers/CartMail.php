@@ -20,7 +20,7 @@ class CartMail
         if(empty($order->email)){
             MessageLarrock::danger('У покупателя из заказа #'. $order->order_id .' не указан email');
         }
-        $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
+        $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN')));
         $mails[] = $order->email;
         $mails = array_unique($mails);
 

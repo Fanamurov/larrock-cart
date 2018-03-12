@@ -280,7 +280,7 @@ class CartController extends Controller
 
         $mails = [];
         if(config('larrock.user.sendImailWhenNewRegister', true) === true){
-            $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN', 'robot@martds.ru')));
+            $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN')));
         }
         $mails[] = $user->email;
         $mails = array_unique($mails);
