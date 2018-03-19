@@ -69,8 +69,8 @@ class CartComponent extends Component
         $row = new FormInput('cost', 'Стоимость заказа');
         $this->rows['cost'] = $row->setDefaultValue(0)->setFillable();
 
-        $row = new FormCatalogItems('items', 'Товары в заказе');
-        $this->rows['items'] = $row->setFillable();
+        $row = new FormTags('items', 'Товары в заказе');
+        $this->rows['items'] = $row->setModels(Cart::class, Catalog::class)->setFillable();
 
         $row = new FormTextarea('comment', 'Комментарий заказчика');
         $this->rows['comment'] = $row->setFillable()->setTemplateAdmin('user_info');
