@@ -3,7 +3,7 @@
 namespace Larrock\ComponentCart;
 
 use Larrock\Core\Component;
-use Larrock\Core\Helpers\FormBuilder\FormCatalogItems;
+use Larrock\Core\Helpers\FormBuilder\FormTags;
 use Larrock\Core\Helpers\FormBuilder\FormHidden;
 use Larrock\Core\Helpers\FormBuilder\FormInput;
 use Larrock\Core\Helpers\FormBuilder\FormSelect;
