@@ -5,7 +5,7 @@
         <div class="uk-width-1-1 uk-width-1-2@m">
             <div class="uk-grid">
                 @foreach($app->rows as $row)
-                    @if($row->template_admin === 'user_info')
+                    @if($row->templateAdmin === 'user_info')
                         <div class="uk-form-row-small uk-width-1-1 @if(!$row instanceof \Larrock\Core\Helpers\FormBuilder\FormTextarea) uk-width-1-2@m @endif">
                             <label class="uk-form-label" for="{{$row->name}}{{ $data->order_id }}">{{ $row->title }}:</label>
                             @if($row instanceof \Larrock\Core\Helpers\FormBuilder\FormTextarea)
@@ -30,7 +30,7 @@
         <div class="uk-width-1-1 uk-width-1-2@m">
             <div class="uk-grid">
                 @foreach($app->rows as $row)
-                    @if($row->template_admin === 'status')
+                    @if($row->templateAdmin === 'status')
                         <div class="uk-form-row-small uk-width-1-1 @if(!$row instanceof \Larrock\Core\Helpers\FormBuilder\FormTextarea) uk-width-1-2@m @endif">
                             <label class="uk-form-label" for="{{$row->name}}{{ $data->order_id }}">{{ $row->title }}:</label>
                             @if($row instanceof \Larrock\Core\Helpers\FormBuilder\FormSelect)
