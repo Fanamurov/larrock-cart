@@ -31,7 +31,7 @@ class CartMail
         /** @noinspection PhpVoidFunctionResultUsedInspection */
         Mail::send('larrock::emails.orderFull', ['data' => $order->toArray(), 'subject' => $subject],
             function($message) use ($mails, $subject){
-                $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_TO_ADMIN_NAME', 'ROBOT'));
+                $message->from('no-reply@'. array_get($_SERVER, 'HTTP_HOST'), env('MAIL_FROM_NAME', 'ROBOT'));
                 $message->to($mails);
                 $message->subject($subject);
             });

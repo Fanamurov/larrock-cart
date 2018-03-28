@@ -11,7 +11,7 @@ use LarrockCart;
 use Larrock\Core\Component;
 
 /**
- * App\Models\Cart
+ * Larrock\ComponentCart\Models\Cart
  *
  * @property integer $id
  * @property integer $order_id
@@ -67,13 +67,10 @@ use Larrock\Core\Component;
  */
 class Cart extends Model
 {
-    /**
-     * @var $this Component
-     */
+    /** @var $this Component */
     protected $config;
     
-    use SearchableTrait;
-    use GetLink;
+    use SearchableTrait, GetLink;
 
     public function __construct(array $attributes = [])
     {
