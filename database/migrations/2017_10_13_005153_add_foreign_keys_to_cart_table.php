@@ -15,6 +15,7 @@ class AddForeignKeysToCartTable extends Migration {
 		Schema::table('cart', function(Blueprint $table)
 		{
 			$table->foreign('user')->references('id')->on('users')->onUpdate('RESTRICT')->onDelete('CASCADE');
+			$table->index(['status_order', 'status_pay']);
 		});
 	}
 
