@@ -13,5 +13,4 @@ class LarrockCart extends Facade
     {
         return 'larrockcart';
     }
-
 }
