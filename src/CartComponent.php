@@ -27,60 +27,59 @@ class CartComponent extends Component
     protected function addRows()
     {
         $row = new FormInput('order_id', 'ID заказа');
-        $this->rows['order_id'] = $row->setValid('max:255')->setInTableAdmin()->setFillable();
+        $this->setRow($row->setValid('max:255')->setInTableAdmin()->setFillable());
 
         $row = new FormSelect('status_order', 'Статус заказа');
-        $this->rows['status_order'] = $row->setValid('max:255')->setDefaultValue('Обрабатывается')
+        $this->setRow($row->setValid('max:255')->setDefaultValue('Обрабатывается')
             ->setOptions(['Обрабатывается', 'Обработано', 'Готов к выдаче', 'Отменен', 'Завершен'])
-            ->setFillable()->setTemplateAdmin('status');
+            ->setFillable()->setTemplateAdmin('status'));
 
         $row = new FormSelect('status_pay', 'Статус оплаты');
-        $this->rows['status_pay'] = $row->setValid('max:255')->setDefaultValue('Не оплачено')
-            ->setOptions(['Не оплачено', 'Оплачено'])->setInTableAdmin()->setFillable()->setTemplateAdmin('status');
+        $this->setRow($row->setValid('max:255')->setDefaultValue('Не оплачено')
+            ->setOptions(['Не оплачено', 'Оплачено'])->setInTableAdmin()->setFillable()->setTemplateAdmin('status'));
 
         $row = new FormSelect('method_pay', 'Метод оплаты');
-        $this->rows['method_pay'] = $row->setValid('max:255')
+        $this->setRow($row->setValid('max:255')
             ->setDefaultValue('наличными')
             ->setOptions(['наличными', 'Visa, Mastercard (через сервис Яндекс.Касса)'])
-            ->setTemplateAdmin('status')->setFillable();
+            ->setTemplateAdmin('status')->setFillable());
 
         $row = new FormSelect('method_delivery', 'Метод доставки');
-        $this->rows['method_delivery'] = $row->setValid('max:255')
+        $this->setRow($row->setValid('max:255')
             ->setDefaultValue('самовывоз')
             ->setOptions(['самовывоз' => 0,
                 'курьером (в черте города)' => 300,
-                'доставка по России' => 700])->setTemplateAdmin('status')->setFillable();
+                'доставка по России' => 700])->setTemplateAdmin('status')->setFillable());
 
         $row = new FormHidden('user', 'ID покупателя');
-        $this->rows['user'] = $row->setFillable()->setTemplateAdmin('user_info');
+        $this->setRow($row->setFillable()->setTemplateAdmin('user_info'));
 
         $row = new FormInput('fio', 'ФИО получателя');
-        $this->rows['fio'] = $row->setFillable()->setTemplateAdmin('user_info');
+        $this->setRow($row->setFillable()->setTemplateAdmin('user_info'));
 
         $row = new FormInput('tel', 'Телефон');
-        $this->rows['tel'] = $row->setFillable()->setTemplateAdmin('user_info');
+        $this->setRow($row->setFillable()->setTemplateAdmin('user_info'));
 
         $row = new FormInput('email', 'Email/login');
-        $this->rows['email'] = $row->setValid('email|min:4')->setTemplateAdmin('user_info')->setFillable();
+        $this->setRow($row->setValid('email|min:4')->setTemplateAdmin('user_info')->setFillable());
 
         $row = new FormTextarea('address', 'Адрес доставки');
-        $this->rows['address'] = $row->setFillable()->setTemplateAdmin('user_info');
+        $this->setRow($row->setFillable()->setTemplateAdmin('user_info'));
 
         $row = new FormInput('cost', 'Стоимость заказа');
-        $this->rows['cost'] = $row->setDefaultValue(0)->setFillable();
+        $this->setRow($row->setDefaultValue(0)->setFillable());
 
         $row = new FormTags('items', 'Товары в заказе');
-        $this->rows['items'] = $row->setModels(Cart::class, Catalog::class)->setFillable();
+        $this->setRow($row->setModels(Cart::class, Catalog::class)->setFillable());
 
         $row = new FormTextarea('comment', 'Комментарий заказчика');
-        $this->rows['comment'] = $row->setFillable()->setTemplateAdmin('user_info');
+        $this->setRow($row->setFillable()->setTemplateAdmin('user_info'));
 
         $row = new FormTextarea('comment_admin', 'Комментарий продавца');
-        $this->rows['comment_admin'] = $row->setFillable()->setTemplateAdmin('status');
+        $this->setRow($row->setFillable()->setTemplateAdmin('status'));
 
         $row = new FormInput('cost_delivery', 'Стоимость доставки');
-        $this->rows['cost_delivery'] = $row->setFillable()
-            ->setCssClassGroup('uk-width-1-1 uk-width-1-2@m');
+        $this->setRow($row->setFillable()->setCssClassGroup('uk-width-1-1 uk-width-1-2@m'));
 
         return $this;
     }
