@@ -2,21 +2,21 @@
 
 namespace Larrock\ComponentCart;
 
+use Cache;
+use LarrockCart;
 use Larrock\Core\Component;
+use Larrock\ComponentCart\Models\Cart;
 use Larrock\Core\Helpers\FormBuilder\FormTags;
-use Larrock\Core\Helpers\FormBuilder\FormHidden;
 use Larrock\Core\Helpers\FormBuilder\FormInput;
+use Larrock\Core\Helpers\FormBuilder\FormHidden;
 use Larrock\Core\Helpers\FormBuilder\FormSelect;
 use Larrock\Core\Helpers\FormBuilder\FormTextarea;
-use Larrock\ComponentCart\Models\Cart;
-use LarrockCart;
-use Cache;
 
 class CartComponent extends Component
 {
     public function __construct()
     {
-        $this->active = TRUE;
+        $this->active = true;
         $this->name = $this->table = 'cart';
         $this->title = 'Заказы';
         $this->description = 'Заказы с интернет-магазина';
@@ -49,7 +49,7 @@ class CartComponent extends Component
             ->setDefaultValue('самовывоз')
             ->setOptions(['самовывоз' => 0,
                 'курьером (в черте города)' => 300,
-                'доставка по России' => 700])->setTemplateAdmin('status')->setFillable());
+                'доставка по России' => 700, ])->setTemplateAdmin('status')->setFillable());
 
         $row = new FormHidden('user', 'ID покупателя');
         $this->setRow($row->setFillable()->setTemplateAdmin('user_info'));
@@ -86,22 +86,24 @@ class CartComponent extends Component
 
     public function renderAdminMenu()
     {
-        $count = \Cache::rememberForever('count-data-admin-'. LarrockCart::getName(), function(){
+        $count = \Cache::rememberForever('count-data-admin-'.LarrockCart::getName(), function () {
             return LarrockCart::getModel()->count(['id']);
         });
 
-        $count_new = \Cache::rememberForever('count-new-data-admin-'. LarrockCart::getName(), function(){
+        $count_new = \Cache::rememberForever('count-new-data-admin-'.LarrockCart::getName(), function () {
             return LarrockCart::getModel()->where('status_order', '!=', 'Завершен')->where('status_order', '!=', 'Отменен')->count(['id']);
         });
-        return view('larrock::admin.sectionmenu.types.default', ['count' => $count_new .'/'. $count,
-            'app' => LarrockCart::getConfig(), 'url' => '/admin/'. LarrockCart::getName()]);
+
+        return view('larrock::admin.sectionmenu.types.default', ['count' => $count_new.'/'.$count,
+            'app' => LarrockCart::getConfig(), 'url' => '/admin/'.LarrockCart::getName(), ]);
     }
 
     public function toDashboard()
     {
-        $data = Cache::rememberForever('LarrockCartItemsDashboard', function(){
+        $data = Cache::rememberForever('LarrockCartItemsDashboard', function () {
             return LarrockCart::getModel()->latest('updated_at')->take(5)->get();
         });
+
         return view('larrock::admin.dashboard.cart', ['component' => LarrockCart::getConfig(), 'data' => $data]);
     }
 }

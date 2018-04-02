@@ -2,20 +2,20 @@
 
 namespace Larrock\ComponentCart\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use LarrockCatalog;
-use LarrockUsers;
-use Larrock\Core\Traits\GetLink;
-use Nicolaslopezj\Searchable\SearchableTrait;
 use LarrockCart;
+use LarrockUsers;
+use LarrockCatalog;
 use Larrock\Core\Component;
+use Larrock\Core\Traits\GetLink;
+use Illuminate\Database\Eloquent\Model;
+use Nicolaslopezj\Searchable\SearchableTrait;
 
 /**
- * Larrock\ComponentCart\Models\Cart
+ * Larrock\ComponentCart\Models\Cart.
  *
- * @property integer $id
- * @property integer $order_id
- * @property integer $user
+ * @property int $id
+ * @property int $order_id
+ * @property int $user
  * @property string $items
  * @property float $cost
  * @property float $cost_discount
@@ -25,7 +25,7 @@ use Larrock\Core\Component;
  * @property string $method_pay
  * @property string $method_delivery
  * @property string $comment
- * @property integer $position
+ * @property int $position
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @method static \Illuminate\Database\Query\Builder|\Larrock\ComponentCart\Models\Cart whereId($value)
@@ -50,8 +50,8 @@ use Larrock\Core\Component;
  * @property string $email
  * @property string $comment_admin
  * @property string $pay_at
- * @property integer $invoiceId
- * @property integer $discount_id
+ * @property int $invoiceId
+ * @property int $discount_id
  * @method static \Illuminate\Database\Query\Builder|\Larrock\ComponentCart\Models\Cart whereAddress($value)
  * @method static \Illuminate\Database\Query\Builder|\Larrock\ComponentCart\Models\Cart whereFio($value)
  * @method static \Illuminate\Database\Query\Builder|\Larrock\ComponentCart\Models\Cart whereTel($value)
@@ -69,7 +69,7 @@ class Cart extends Model
 {
     /** @var $this Component */
     protected $config;
-    
+
     use SearchableTrait, GetLink;
 
     public function __construct(array $attributes = [])
@@ -87,32 +87,34 @@ class Cart extends Model
             'cart.tel' => 20,
             'cart.email' => 20,
             'cart.fio' => 30,
-        ]
+        ],
     ];
 
-	protected $casts = [
-		'order_id' => 'integer',
-		'cost' => 'float',
-		'cost_discount' => 'float',
-        'discount' => 'collection'
-	];
+    protected $casts = [
+        'order_id' => 'integer',
+        'cost' => 'float',
+        'cost_discount' => 'float',
+        'discount' => 'collection',
+    ];
 
     public function getConfig()
     {
         return $this->config;
     }
 
-	public function getItemsAttribute($value)
-	{
-		$items = json_decode($value);
-		if(\is_array($items) || \is_object($items)){
-			foreach($items as $item_key => $item_value){
-				$items->{$item_key}->catalog = LarrockCatalog::getModel()->whereId($item_value->id)->with(['getImages'])->first();
-			}
-			return $items;
-		}
+    public function getItemsAttribute($value)
+    {
+        $items = json_decode($value);
+        if (\is_array($items) || \is_object($items)) {
+            foreach ($items as $item_key => $item_value) {
+                $items->{$item_key}->catalog = LarrockCatalog::getModel()->whereId($item_value->id)->with(['getImages'])->first();
+            }
+
+            return $items;
+        }
+
         return [];
-	}
+    }
 
     public function getDiscountAttribute($value)
     {
@@ -124,8 +126,8 @@ class Cart extends Model
         return json_decode($value);
     }
 
-	public function getUser()
-	{
-		return $this->hasOne(LarrockUsers::getModelName(), 'id', 'user');
-	}
+    public function getUser()
+    {
+        return $this->hasOne(LarrockUsers::getModelName(), 'id', 'user');
+    }
 }

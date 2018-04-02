@@ -19,10 +19,10 @@ class LarrockComponentCartServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
         $this->publishes([
-            __DIR__.'/../views' => base_path('resources/views/vendor/larrock')
+            __DIR__.'/../views' => base_path('resources/views/vendor/larrock'),
         ]);
         $this->publishes([
-            __DIR__.'/../lang' => resource_path('lang/vendor/larrock')
+            __DIR__.'/../lang' => resource_path('lang/vendor/larrock'),
         ], 'lang');
     }
 
@@ -33,8 +33,9 @@ class LarrockComponentCartServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->singleton('larrockcart', function() {
+        $this->app->singleton('larrockcart', function () {
             $class = config('larrock.components.cart', CartComponent::class);
+
             return new $class;
         });
     }

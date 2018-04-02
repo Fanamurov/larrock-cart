@@ -23,10 +23,10 @@ class OrderShortRequest extends FormRequest
      */
     public function rules()
     {
-		return [
-			'name' => 'required|max:255',
-			'contact' => 'required',
-			//'g-recaptcha-response' => 'required|recaptcha',
-		];
+        return [
+            'name' => 'required|max:255',
+            'contact' => 'required',
+            //'g-recaptcha-response' => 'required|recaptcha',
+        ];
     }
 }
