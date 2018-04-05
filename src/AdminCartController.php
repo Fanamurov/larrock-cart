@@ -2,6 +2,9 @@
 
 namespace Larrock\ComponentCart;
 
+use Larrock\Core\Events\ComponentItemDestroyed;
+use Larrock\Core\Events\ComponentItemStored;
+use Larrock\Core\Events\ComponentItemUpdated;
 use View;
 use Cache;
 use Validator;
@@ -239,6 +242,7 @@ class AdminCartController extends Controller
         }
         $order->order_id = ++$order_id;
         $order->save();
+        event(new ComponentItemStored($this->config, $order, $request));
 
         \Cart::instance('temp')->destroy();
         MessageLarrock::success(\Lang::get('larrock::cart.admin.order_create', ['number' => $order->order_id]), true);
@@ -314,6 +318,7 @@ class AdminCartController extends Controller
         }
 
         if ($data->save()) {
+            event(new ComponentItemUpdated($this->config, $data, $request));
             if ($need_mailIt) {
                 $cartMail = new CartMail();
                 $cartMail->mailOrder($request, $data, $subject);
@@ -507,6 +512,7 @@ class AdminCartController extends Controller
             return back();
         }
         if ($data->delete()) {
+            event(new ComponentItemDestroyed($this->config, $data, $request));
             $data->status_order = 'Удален';
             $cartMail = new CartMail();
             $cartMail->mailOrder($request, $data);
