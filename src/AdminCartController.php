@@ -285,11 +285,6 @@ class AdminCartController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), Component::_valid_construct(LarrockCart::getConfig(), 'update', $id));
-        if ($validator->fails()) {
-            return back()->withInput($request->except('password'))->withErrors($validator);
-        }
-
         /** @var \Larrock\ComponentCart\Models\Cart $data */
         $data = LarrockCart::getModel()->find($id);
         $need_mailIt = null; //нужно ли отправлять уведомление по email покупателю
@@ -311,6 +306,11 @@ class AdminCartController extends Controller
             if ($key === $data->method_delivery) {
                 $data->cost_delivery = $option;
             }
+        }
+
+        $validator = Validator::make($data->toArray(), $this->config->getValid());
+        if ($validator->fails()) {
+            return back()->withInput($request->except('password'))->withErrors($validator);
         }
 
         if ($data->save()) {
