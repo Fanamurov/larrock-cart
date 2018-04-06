@@ -1,5 +1,5 @@
 @extends('larrock::admin.main')
-@section('title') {{ $app->name }} admin @endsection
+@section('title') {{ $package->name }} admin @endsection
 
 @section('content')
     <div class="container-head uk-margin-bottom">
@@ -9,7 +9,7 @@
             </div>
             <div class="uk-width-auto">
                 @if(isset($allowCreate))
-                    <a class="uk-button uk-button-large uk-button-primary" href="/admin/{{ $app->name }}/create">Создать новый заказ</a>
+                    <a class="uk-button uk-button-large uk-button-primary" href="/admin/{{ $package->name }}/create">Создать новый заказ</a>
                 @endif
             </div>
         </div>

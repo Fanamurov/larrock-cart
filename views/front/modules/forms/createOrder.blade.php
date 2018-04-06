@@ -35,14 +35,14 @@
     </div>
     <div class="uk-grid">
         <div class="uk-width-1-1 uk-width-medium-5-10">
-            @if(isset($app->rows['fio']))
+            @if(isset($package->rows['fio']))
                 <div class="uk-form-row">
                     <label for="fio" class="uk-form-label">ФИО или название компании:</label>
                     <input type="text" name="fio" id="fio" class="uk-width-1-1 uk-form-large"
                            value="@if(Auth::guard()->check() && empty(old('fio'))){!! Auth::guard()->user()->fio !!}@else{{ old('fio') }}@endif" required>
                 </div>
             @endif
-            @if(isset($app->rows['tel']))
+            @if(isset($package->rows['tel']))
                 <div class="uk-form-row">
                     <label for="tel" class="uk-form-label">Номер телефона:</label>
                     <input type="tel" name="tel" id="tel" class="uk-width-1-1 uk-form-large"
@@ -58,18 +58,18 @@
             @endif
         </div>
         <div class="uk-width-1-1 uk-width-medium-5-10">
-            @if(isset($app->rows['comment']))
+            @if(isset($package->rows['comment']))
                 <div class="uk-form-row">
                     <label for="comment" class="uk-form-label">Комментарий к заказу:</label>
                     <textarea name="comment" id="comment" class="uk-width-1-1">{{ old('comment') }}</textarea>
                 </div>
             @endif
 
-            @if(isset($app->rows['method_delivery']))
+            @if(isset($package->rows['method_delivery']))
                 <div class="uk-form-row">
                     <label for="method_delivery" class="uk-form-label">Метод доставки:</label>
                     <select name="method_delivery" id="delivery-method" class="uk-width-1-1 uk-form-large">
-                        @foreach($app->rows['method_delivery']->options as $key => $value)
+                        @foreach($package->rows['method_delivery']->options as $key => $value)
                             <option @if(old('method_delivery') === $key) selected @endif value="{{ $key }}" data-cost="{{ $value }}">{{ $key }}</option>
                         @endforeach
                     </select>
@@ -81,11 +81,11 @@
                 </div>
             @endif
 
-            @if(isset($app->rows['method_pay']))
+            @if(isset($package->rows['method_pay']))
                 <div class="uk-form-row">
                     <label for="method_pay" class="uk-form-label">Метод оплаты:</label>
                     <select name="method_pay" id="pay-method" class="uk-width-1-1 uk-form-large">
-                        @foreach($app->rows['method_pay']->options as $value)
+                        @foreach($package->rows['method_pay']->options as $value)
                             <option @if(old('method_delivery') === $value) selected @endif value="{{ $value }}" data-cost="{{ $value }}">{{ $value }}</option>
                         @endforeach
                     </select>

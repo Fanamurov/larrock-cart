@@ -6,7 +6,7 @@
                 <a data-fancybox="gallery" data-caption="{{ $data->title }}" href="{{ $data->first_image }}">
                     <img src="{{ $data->first_image }}" class="catalogImage all-width" itemprop="image"></a>
             </div>
-            @foreach($app->rows as $row_key => $row)
+            @foreach($package->rows as $row_key => $row)
                 @if($row->template === 'description' && isset($data->{$row_key}) && !empty($data->{$row_key}))
                     <p><strong>{{ $row->title }}:</strong> {{ $data->{$row_key} }}</p>
                 @endif

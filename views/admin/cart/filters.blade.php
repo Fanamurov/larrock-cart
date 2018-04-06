@@ -26,7 +26,7 @@
             <label class="uk-form-label" for="status_order">Статус заказа:</label>
             <select name="status_order" id="status_order" class="uk-select uk-form-small">
                 <option>Любой</option>
-                @foreach($app->rows['status_order']->options as $status)
+                @foreach($package->rows['status_order']->options as $status)
                     <option value="{{ $status }}" @if(Request::get('status_order') === $status) selected @endif>{{ $status }}</option>
                 @endforeach
             </select>
@@ -35,7 +35,7 @@
             <label class="uk-form-label" for="status_pay">Статус оплаты:</label>
             <select name="status_pay" id="status_pay" class="uk-select uk-form-small">
                 <option>Любой</option>
-                @foreach($app->rows['status_pay']->options as $status)
+                @foreach($package->rows['status_pay']->options as $status)
                     <option value="{{ $status }}" @if(Request::get('status_pay') === $status) selected @endif>{{ $status }}</option>
                 @endforeach
             </select>

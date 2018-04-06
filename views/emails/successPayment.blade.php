@@ -15,28 +15,28 @@
     margin-left: 0;
     text-align: left;">{{ $subject }}</h1>
     <h2 style="font-family: Arial, sans-serif; margin-bottom: 10px; font-size: 18px;">Статус заказа: {{ $data['status_order'] }}</h2>
-    @if(isset($app->rows['status_pay']) && !empty($data['status_pay']))
+    @if(isset($package->rows['status_pay']) && !empty($data['status_pay']))
         <h2 style="font-family: Arial, sans-serif; margin-top: 0;font-size: 18px; margin-bottom: 35px;">Статус оплаты: {{ $data['status_pay'] }}</h2>
     @endif
-    @if(isset($app->rows['fio']) && !empty($data['fio']))
+    @if(isset($package->rows['fio']) && !empty($data['fio']))
         <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">ФИО: <strong>{{ $data['fio'] }}</strong></p>
     @endif
-    @if(isset($app->rows['email']) && !empty($data['email']))
+    @if(isset($package->rows['email']) && !empty($data['email']))
         <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Email/логин в личный кабинет: <strong>{{ $data['email'] }}</strong></p>
     @endif
-    @if(isset($app->rows['tel']) && !empty($data['tel']))
+    @if(isset($package->rows['tel']) && !empty($data['tel']))
         <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Телефон: <strong>{{ $data['tel'] }}</strong></p>
     @endif
-    @if(isset($app->rows['address']) && !empty($data['address']))
+    @if(isset($package->rows['address']) && !empty($data['address']))
         <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Адрес доставки: <strong>{{ $data['address'] }}</strong></p>
     @endif
-    @if(isset($app->rows['method_delivery']) && !empty($data['method_delivery']))
+    @if(isset($package->rows['method_delivery']) && !empty($data['method_delivery']))
         <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Метод доставки: <strong>{{ $data['method_delivery'] }}</strong></p>
     @endif
-    @if(isset($app->rows['method_pay']) && !empty($data['method_pay']))
+    @if(isset($package->rows['method_pay']) && !empty($data['method_pay']))
         <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Метод оплаты: <strong>{{ $data['method_pay'] }}</strong></p>
     @endif
-    @if(isset($app->rows['comment']) && !empty($data['comment']))
+    @if(isset($package->rows['comment']) && !empty($data['comment']))
         <p style="font:14px/16px Calibri,Helvetica,Arial,sans-serif;">Комментарий к заказу: <strong>{{ $data['comment'] }}</strong></p>
     @endif
 

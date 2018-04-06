@@ -49,7 +49,7 @@
                         </td>
                         <td>
                             <div class="uk-form-row uk-form-row-costrow">
-                                @foreach($app->rows as $row_key => $row)
+                                @foreach($package->rows as $row_key => $row)
                                     @if($row->template === 'description' && isset($item->{$row_key}) && !empty($item->{$row_key}))
                                         <p><strong>{{ $row->title }}:</strong> {{ $item->{$row_key} }}</p>
                                     @endif
@@ -70,7 +70,7 @@
                             <div class="uk-form-row uk-form-row-costrow">
                                 <div class="uk-grid uk-grid-small">
                                     <div class="uk-width-auto">
-                                        <form action="/admin/{{ $app->name }}/qtyItem/{{ $key }}" method="post" class="uk-form">
+                                        <form action="/admin/{{ $package->name }}/qtyItem/{{ $key }}" method="post" class="uk-form">
                                             <input name="_method" type="hidden" value="PUT">
                                             {{ csrf_field() }}
                                             <input type="hidden" name="order_id" value="{{ $data->order_id }}">
@@ -89,7 +89,7 @@
                             <p class="uk-h4 uk-text-right">{{ $item->subtotal }} руб.</p>
                         </td>
                         <td>
-                            <form action="/admin/{{ $app->name }}/removeItem" method="post" class="remove-item">
+                            <form action="/admin/{{ $package->name }}/removeItem" method="post" class="remove-item">
                                 <input name="_method" type="hidden" value="DELETE">
                                 <input type="hidden" name="order_id" value="{{ $data->order_id }}">
                                 <input type="hidden" name="id" value="{{ $key }}">

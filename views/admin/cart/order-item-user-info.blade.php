@@ -1,10 +1,10 @@
 @if( !isset($formRemove))
-<form class="cart-user-info uk-form uk-form-stacked" action="/admin/{{ $app->name }}/{{ $data->id }}" method="post">
+<form class="cart-user-info uk-form uk-form-stacked" action="/admin/{{ $package->name }}/{{ $data->id }}" method="post">
 @endif
     <div class="uk-grid">
         <div class="uk-width-1-1 uk-width-1-2@m">
             <div class="uk-grid">
-                @foreach($app->rows as $row)
+                @foreach($package->rows as $row)
                     @if($row->templateAdmin === 'user_info')
                         <div class="uk-form-row-small uk-width-1-1 @if(!$row instanceof \Larrock\Core\Helpers\FormBuilder\FormTextarea) uk-width-1-2@m @endif">
                             <label class="uk-form-label" for="{{$row->name}}{{ $data->order_id }}">{{ $row->title }}:</label>
@@ -29,7 +29,7 @@
         </div>
         <div class="uk-width-1-1 uk-width-1-2@m">
             <div class="uk-grid">
-                @foreach($app->rows as $row)
+                @foreach($package->rows as $row)
                     @if($row->templateAdmin === 'status')
                         <div class="uk-form-row-small uk-width-1-1 @if(!$row instanceof \Larrock\Core\Helpers\FormBuilder\FormTextarea) uk-width-1-2@m @endif">
                             <label class="uk-form-label" for="{{$row->name}}{{ $data->order_id }}">{{ $row->title }}:</label>

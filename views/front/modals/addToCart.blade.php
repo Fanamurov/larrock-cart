@@ -27,7 +27,7 @@
                                 <br/><br/>
                             @endif
                             <div class="catalog-descriptions-rows">
-                                @foreach($app->rows as $row_key => $row)
+                                @foreach($package->rows as $row_key => $row)
                                     @if($row->template && $row->template === 'in_card' && isset($data->{$row->name}) && !empty($data->{$row->name}))
                                         <p><span>{{ $row->title }}:</span> {{ $data->{$row->name} }}</p>
                                     @endif

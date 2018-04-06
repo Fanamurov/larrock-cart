@@ -13,7 +13,7 @@
                     <button class="uk-button uk-button-default uk-form-small" type="submit">Отправить email покупателю</button>
                 </form>
             @endif
-            <form action="/admin/{{ $app->name }}/{{ $data->id }}" method="post" class="uk-form uk-float-right">
+            <form action="/admin/{{ $package->name }}/{{ $data->id }}" method="post" class="uk-form uk-float-right">
                 <input name="_method" type="hidden" value="DELETE">
                 {{ csrf_field() }}
                 <button type="submit" class="uk-button uk-button-danger uk-button-small please_conform">Удалить заказ</button>
