@@ -21,7 +21,7 @@ class CartComponent extends Component
         $this->title = 'Заказы';
         $this->description = 'Заказы с интернет-магазина';
         $this->model = \config('larrock.models.cart', Cart::class);
-        $this->addRows()->isSearchable();
+        $this->addRows();
     }
 
     protected function addRows()
