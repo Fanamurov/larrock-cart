@@ -4,7 +4,7 @@
         @if( !Auth::guard()->check())
             <div class="uk-width-1-1 uk-width-medium-1-2">
                 <div class="uk-form-row">
-                    <label for="email" class="uk-form-label">Ваш email:<span class="text-muted"><sup>*он же логин</sup></span></label>
+                    <label for="email" class="uk-form-label">Ваш email:<span class="text-muted" style="display: none"><sup>*он же логин</sup></span></label>
                     <input type="email" name="email" id="email" tabindex="1" class="uk-width-1-1 uk-form-large"
                            value="@if(Auth::guard()->check()){!! Auth::guard()->user()->email !!}@endif" required>
                 </div>
@@ -12,13 +12,13 @@
             <div class="uk-width-1-1 uk-width-medium-1-2">
                 <div class="uk-form-row">
                     <label for="password" class="uk-form-label">Введите пароль или придумайте новый:</label>
-                    <input type="text" name="password" id="password" required tabindex="2" class="uk-width-1-1 uk-form-large">
+                    <input type="text" name="password" id="password" required tabindex="2" class="uk-width-1-1 uk-form-large" disabled>
                 </div>
             </div>
             <div class="uk-width-1-1 uk-width-medium-1-1">
                 <div class="uk-form-row uk-margin-top">
                     <label for="without_registry" class="uk-form-label">
-                        <input type="checkbox" name="without_registry" id="without_registry" value="true"> Сделать заказ без регистрации (email не обязателен, пароль не требуются)
+                        <input type="checkbox" name="without_registry" id="without_registry" value="true" checked> Сделать заказ без регистрации (email не обязателен, пароль не требуется)
                     </label>
                 </div>
             </div>
@@ -66,7 +66,7 @@
             @endif
 
             @if(isset($package->rows['method_delivery']))
-                <div class="uk-form-row">
+                <div class="uk-form-row uk-hidden">
                     <label for="method_delivery" class="uk-form-label">Метод доставки:</label>
                     <select name="method_delivery" id="delivery-method" class="uk-width-1-1 uk-form-large">
                         @foreach($package->rows['method_delivery']->options as $key => $value)
@@ -82,7 +82,7 @@
             @endif
 
             @if(isset($package->rows['method_pay']))
-                <div class="uk-form-row">
+                <div class="uk-form-row uk-hidden">
                     <label for="method_pay" class="uk-form-label">Метод оплаты:</label>
                     <select name="method_pay" id="pay-method" class="uk-width-1-1 uk-form-large">
                         @foreach($package->rows['method_pay']->options as $value)
@@ -100,7 +100,7 @@
             {{ csrf_field() }}
             <div class="uk-form-row">
                 <button type="submit" class="uk-button uk-button-primary uk-button-large uk-width-1-1" name="submit_orderFull">Оформить заказ</button>
-                <div class="repeat-total uk-text-right uk-margin-top">К оплате: <span class="repeat-total-cost"></span> рублей</div>
+                <div class="repeat-total uk-text-right uk-margin-top">К оплате: <span class="repeat-total-cost">{{ Cart::instance('main')->total() }}</span> рублей</div>
             </div>
         </div>
     </div>

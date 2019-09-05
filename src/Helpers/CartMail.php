@@ -17,11 +17,10 @@ class CartMail
      */
     public function mailOrder(Request $request, $order, $subject = null)
     {
-        if (empty($order->email)) {
-            MessageLarrock::danger('У покупателя из заказа #'.$order->order_id.' не указан email');
-        }
         $mails = array_map('trim', explode(',', env('MAIL_TO_ADMIN')));
-        $mails[] = $order->email;
+        if ($order->email) {
+            $mails[] = $order->email;
+        }
         $mails = array_unique($mails);
 
         if (! $subject) {
@@ -37,6 +36,8 @@ class CartMail
             });
 
         \Log::info('ORDER CHANGE: #'.$order->order_id.'. Order: '.json_encode($order));
-        MessageLarrock::success('На email покупателя отправлено письмо с информацией по заказу');
+        if ($order->email) {
+            MessageLarrock::success('На email покупателя отправлено письмо с информацией по заказу');
+        }
     }
 }
