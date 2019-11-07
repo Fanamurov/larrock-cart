@@ -60,6 +60,22 @@ class CartController extends Controller
         }
 
         $cart = Cart::instance('main')->content();
+
+        foreach($cart as $key => $item){
+            //Проверяем наличие товара
+            if(!LarrockCatalog::getModel()->whereId($item->id)->whereActive(1)->first()){
+                if (Cart::instance('main')->get($item->rowId)) {
+                    Cart::instance('main')->remove($item->rowId);
+                }
+                if(Cart::instance('main')->count() < 1){
+                    return back()->withInput();
+                }
+                return redirect('/cart')->withInput();
+            }
+        }
+
+        $cart = Cart::instance('main')->content();
+        
         /*foreach($cart as $key => $item){
             //Проверяем наличие товара
             if($get_tovar = LarrockCatalog::getModel()->whereId($item->id)->first()){
