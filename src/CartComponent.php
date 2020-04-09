@@ -3,6 +3,7 @@
 namespace Larrock\ComponentCart;
 
 use Cache;
+use Larrock\ComponentCatalog\Models\Catalog;
 use LarrockCart;
 use Larrock\Core\Component;
 use Larrock\ComponentCart\Models\Cart;
@@ -11,7 +12,6 @@ use Larrock\Core\Helpers\FormBuilder\FormInput;
 use Larrock\Core\Helpers\FormBuilder\FormHidden;
 use Larrock\Core\Helpers\FormBuilder\FormSelect;
 use Larrock\Core\Helpers\FormBuilder\FormTextarea;
-use Larrock\ComponentCatalog\Models\Catalog;
 
 class CartComponent extends Component
 {
@@ -71,7 +71,7 @@ class CartComponent extends Component
         $this->setRow($row->setDefaultValue(0)->setFillable());
 
         $row = new FormTags('items', 'Товары в заказе');
-        $this->setRow($row->setModels(Cart::class, Catalog::class)->setFillable());
+        $this->setRow($row->setModels(Cart::class, \Larrock\ComponentCatalog\Models\Catalog::class)->setFillable());
 
         $row = new FormTextarea('comment', 'Комментарий заказчика');
         $this->setRow($row->setFillable()->setTemplateAdmin('user_info'));
